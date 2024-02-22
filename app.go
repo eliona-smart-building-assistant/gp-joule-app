@@ -17,13 +17,13 @@ package main
 
 import (
 	"context"
+	"gp-joule/apiserver"
+	"gp-joule/apiservices"
+	"gp-joule/appdb"
+	"gp-joule/conf"
+	"gp-joule/eliona"
 	"net/http"
 	"sync"
-	"template/apiserver"
-	"template/apiservices"
-	"template/appdb"
-	"template/conf"
-	"template/eliona"
 	"time"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/app"

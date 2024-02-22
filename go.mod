@@ -1,4 +1,4 @@
-module template
+module gp-joule
 
 go 1.20
 

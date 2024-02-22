@@ -1,6 +1,6 @@
-# App Template
+# Eliona App for GP Joule
 
-This template is a part of the Eliona App SDK. It can be used to create an app stub for an Eliona environment.
+This app connects [GP Joule API](https://www.gp-joule.com/) and gathers information about data of charging stations.
 
 ## Configuration
 
@@ -34,11 +34,11 @@ This initialization can be handled by the `reset.sql` script.
 
 <mark>Todo: Describe other tables if the app needs them.</mark>
 
-The app requires configuration data that remains in the database. To do this, the app creates its own database schema `template` during initialization. To modify and handle the configuration data the app provides an API access. Have a look at the [API specification](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/app-template/develop/openapi.yaml) how the configuration tables should be used.
+The app requires configuration data that remains in the database. To do this, the app creates its own database schema `gp_joule` during initialization. To modify and handle the configuration data the app provides an API access. Have a look at the [API specification](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/gp-joule-app/develop/openapi.yaml) how the configuration tables should be used.
 
-- `template.configuration`: Contains configuration of the app. Editable through the API.
+- `gp_joule.configuration`: Contains configuration of the app. Editable through the API.
 
-- `template.asset`: Provides asset mapping. Maps broker's asset IDs to Eliona asset IDs.
+- `gp_joule.asset`: Provides asset mapping. Maps broker's asset IDs to Eliona asset IDs.
 
 **Generation**: to generate access method to database see Generation section below.
 
@@ -49,7 +49,7 @@ The app requires configuration data that remains in the database. To do this, th
 
 The app provides its own API to access configuration data and other functions. The full description of the API is defined in the `openapi.yaml` OpenAPI definition file.
 
-- [API Reference](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/app-template/develop/openapi.yaml) shows details of the API
+- [API Reference](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/gp-joule-app/develop/openapi.yaml) shows details of the API
 
 **Generation**: to generate api server stub see Generation section below.
 
@@ -67,7 +67,7 @@ The data is written for each device, structured into different subtypes of Elino
 
 ### Continuous asset creation ###
 
-Assets for all devices connected to the Template account are created automatically when the configuration is added.
+Assets for all devices connected to the GP Joule API are created automatically when a configuration is added.
 
 To select which assets to create, a filter could be specified in config. The schema of the filter is defined in the `openapi.yaml` file.
 

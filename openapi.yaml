@@ -17,29 +17,36 @@ openapi: 3.0.3
 
 info:
   version: 1.0.0
-  title: App template API
-  description: API to access and configure the app template
+  title: GP Joule app API
+  description: API to access and configure the GP Joule app
 externalDocs:
-  description: Find out more about the app template
-  url: https://github.com/eliona-smart-building-assistant/app-template
+  description: Find out more about the GP Joule app
+  url: https://github.com/eliona-smart-building-assistant/gp-joule-app
 servers:
-  - url: http://template/v1
+  - url: "https://{server}/v1"
+    variables:
+      server:
+        default: loriot-io
+  - url: "https://{environment}.eliona.io/apps/loriot-io/api/v1"
+    variables:
+      environment:
+        default: name
 
 tags:
   - name: Configuration
     description: Configure the app
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/gp-joule-app
 
   - name: Version
     description: API version
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/gp-joule-app
 
   - name: Customization
     description: Help to customize Eliona environment
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/gp-joule-app
 
 paths:
   /configs:
@@ -176,7 +183,7 @@ paths:
           required: true
           schema:
             type: string
-            example: Template
+            example: GP Joule
         - name: projectId
           in: query
           description: Define the project the dashboard should be

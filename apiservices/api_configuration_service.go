@@ -18,9 +18,9 @@ package apiservices
 import (
 	"context"
 	"errors"
+	"gp-joule/apiserver"
+	"gp-joule/conf"
 	"net/http"
-	"template/apiserver"
-	"template/conf"
 )
 
 // ConfigurationAPIService is a service that implements the logic for the ConfigurationAPIServicer

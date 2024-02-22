@@ -17,7 +17,7 @@ package eliona
 
 import (
 	"fmt"
-	"template/apiserver"
+	"gp-joule/apiserver"
 
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
@@ -48,8 +48,8 @@ func notifyUser(userId string, projectId string, assetsCreated int) error {
 				User:      userId,
 				ProjectId: *api.NewNullableString(&projectId),
 				Message: *api.NewNullableTranslation(&api.Translation{
-					De: api.PtrString(fmt.Sprintf("Template App hat %d neue Assets angelegt. Diese sind nun im Asset-Management verfügbar.", assetsCreated)),
-					En: api.PtrString(fmt.Sprintf("Template app added %v new assets. They are now available in Asset Management.", assetsCreated)),
+					De: api.PtrString(fmt.Sprintf("GP Joule App hat %d neue Assets angelegt. Diese sind nun im Asset-Management verfügbar.", assetsCreated)),
+					En: api.PtrString(fmt.Sprintf("GP Joule app added %v new assets. They are now available in Asset Management.", assetsCreated)),
 				}),
 			}).
 		Execute()

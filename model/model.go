@@ -18,8 +18,8 @@ package model
 import (
 	"context"
 	"fmt"
-	"template/apiserver"
-	"template/conf"
+	"gp-joule/apiserver"
+	"gp-joule/conf"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"github.com/eliona-smart-building-assistant/go-eliona/utils"
@@ -91,15 +91,15 @@ type Root struct {
 }
 
 func (r *Root) GetName() string {
-	return "template"
+	return "gp_joule"
 }
 
 func (r *Root) GetDescription() string {
-	return "Root asset for template devices"
+	return "Root asset for GP Joule"
 }
 
 func (r *Root) GetAssetType() string {
-	return "template_root"
+	return "gp_joule_root"
 }
 
 func (r *Root) GetGAI() string {

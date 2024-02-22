@@ -18,10 +18,10 @@ package apiservices
 import (
 	"context"
 	"encoding/json"
+	"gp-joule/apiserver"
 	"io"
 	"net/http"
 	"os"
-	"template/apiserver"
 
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"github.com/eliona-smart-building-assistant/go-utils/log"

@@ -3,15 +3,15 @@ package eliona
 import (
 	"context"
 	"fmt"
-	"template/apiserver"
-	"template/conf"
-	"template/model"
+	"gp-joule/apiserver"
+	"gp-joule/conf"
+	"gp-joule/model"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 )
 
-const ClientReference string = "template-app"
+const ClientReference string = "gp-joule-app"
 
 func UpsertAssetData(config apiserver.Configuration, assets []model.ExampleDevice) error {
 	for _, projectId := range *config.ProjectIDs {

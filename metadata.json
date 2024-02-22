@@ -1,20 +1,20 @@
 {
-  "name": "template",
+  "name": "gp-joule",
   "elionaMinVersion": "v11.0.0",
   "displayName": {
-    "en": "App template",
-    "de": "App Vorlage"
+    "en": "GP Joule",
+    "de": "GP Joule"
   },
   "description": {
-    "en": "This template can be used to create an app stub for an Eliona environment.",
-    "de": "Diese Vorlage kann verwendet werden um eine App für Eliona zu erstellen."
+    "en": "The GP Joule app allows access to GP Joule stations.",
+    "de": "Die GP Joule App ermöglicht den Zugriff auf GP Joule Stationen."
   },
   "dashboardTemplateNames": [
-    "Template"
+    "GP Joule"
   ],
   "apiUrl": "v1",
   "apiSpecificationPath": "/version/openapi.json",
-  "documentationUrl": "https://doc.eliona.io/eliona/referenzen/app-entwicklung",
+  "documentationUrl": "https://doc.eliona.io/",
   "useEnvironment": [
     "CONNECTION_STRING",
     "INIT_CONNECTION_STRING",
