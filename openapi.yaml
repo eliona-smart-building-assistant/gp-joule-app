@@ -225,11 +225,16 @@ components:
           description: Internal identifier for the configured API (created automatically).
           readOnly: true
           nullable: true
-        apiAccessChangeMe:
+        rootUrl:
           type: string
           format: string
-          description: There should be things like API address, access keys and so on.
-          example: 10.10.10.101
+          description: The URL to GP Joule API root
+          example: https://api.connect-gp-joule.net/cpo/rest
+        apiKey:
+          type: string
+          format: string
+          description: The API key for GP Joule API
+          example: secret
         enable:
           type: boolean
           description: Flag to enable or disable fetching from this API
