@@ -92,7 +92,8 @@ func DeleteConfig(ctx context.Context, configID int64) error {
 }
 
 func dbConfigFromApiConfig(ctx context.Context, apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
-	dbConfig.APIAccessChangeMe = apiConfig.ApiAccessChangeMe
+	dbConfig.RootURL = apiConfig.RootUrl
+	dbConfig.APIKey = apiConfig.ApiKey
 
 	dbConfig.ID = null.Int64FromPtr(apiConfig.Id).Int64
 	dbConfig.Enable = null.BoolFromPtr(apiConfig.Enable)
@@ -119,7 +120,8 @@ func dbConfigFromApiConfig(ctx context.Context, apiConfig apiserver.Configuratio
 }
 
 func apiConfigFromDbConfig(dbConfig *appdb.Configuration) (apiConfig apiserver.Configuration, err error) {
-	apiConfig.ApiAccessChangeMe = dbConfig.APIAccessChangeMe
+	apiConfig.RootUrl = dbConfig.RootURL
+	apiConfig.ApiKey = dbConfig.APIKey
 
 	apiConfig.Id = &dbConfig.ID
 	apiConfig.Enable = dbConfig.Enable.Ptr()
@@ -183,7 +185,7 @@ func SetAllConfigsInactive(ctx context.Context) (int64, error) {
 	})
 }
 
-func InsertAsset(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string, assetId int32, providerId string) error {
+func InsertAsset(ctx context.Context, config *apiserver.Configuration, projId string, globalAssetID string, assetId int32, providerId string) error {
 	var dbAsset appdb.Asset
 	dbAsset.ConfigurationID = null.Int64FromPtr(config.Id).Int64
 	dbAsset.ProjectID = projId
@@ -193,7 +195,7 @@ func InsertAsset(ctx context.Context, config apiserver.Configuration, projId str
 	return dbAsset.InsertG(ctx, boil.Infer())
 }
 
-func GetAssetId(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string) (*int32, error) {
+func GetAssetId(ctx context.Context, config *apiserver.Configuration, projId string, globalAssetID string) (*int32, error) {
 	dbAsset, err := appdb.Assets(
 		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
 		appdb.AssetWhere.ProjectID.EQ(projId),

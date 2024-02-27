@@ -19,9 +19,9 @@ import (
 	"context"
 	"gp-joule/apiserver"
 	"gp-joule/apiservices"
-	"gp-joule/appdb"
 	"gp-joule/conf"
-	"gp-joule/eliona"
+	"gp-joule/gp_joule"
+	"gp-joule/model"
 	"net/http"
 	"sync"
 	"time"
@@ -69,13 +69,13 @@ func collectData() {
 	for _, config := range configs {
 		if !conf.IsConfigEnabled(config) {
 			if conf.IsConfigActive(config) {
-				conf.SetConfigActiveState(context.Background(), config, false)
+				_, _ = conf.SetConfigActiveState(context.Background(), config, false)
 			}
 			continue
 		}
 
 		if !conf.IsConfigActive(config) {
-			conf.SetConfigActiveState(context.Background(), config, true)
+			_, _ = conf.SetConfigActiveState(context.Background(), config, true)
 			log.Info("conf", "Collecting initialized with Configuration %d:\n"+
 				"Enable: %t\n"+
 				"Refresh Interval: %d\n"+
@@ -101,45 +101,52 @@ func collectData() {
 }
 
 func collectResources(config *apiserver.Configuration) error {
-	// Do the magic here
-	return nil
-}
 
-// listenForOutputChanges listens to output attribute changes from Eliona. Delete if not needed.
-func listenForOutputChanges() {
-	for { // We want to restart listening in case something breaks.
-		outputs, err := eliona.ListenForOutputChanges()
-		if err != nil {
-			log.Error("eliona", "listening for output changes: %v", err)
-			return
-		}
-		for output := range outputs {
-			if cr := output.ClientReference.Get(); cr != nil && *cr == eliona.ClientReference {
-				// Just an echoed value this app sent.
-				continue
-			}
-			asset, err := conf.GetAssetById(output.AssetId)
-			if err != nil {
-				log.Error("conf", "getting asset by assetID %v: %v", output.AssetId, err)
-				return
-			}
-			config, err := conf.GetConfigForAsset(asset)
-			if err != nil {
-				log.Error("conf", "getting configuration for asset id %v: %v", asset.AssetID.Int32, err)
-				return
-			}
-			if err := outputData(asset, config, output.Data); err != nil {
-				log.Error("conf", "outputting data (%v) for config %v and assetId %v: %v", output.Data, config.Id, asset.AssetID.Int32, err)
-				return
-			}
-		}
-		time.Sleep(time.Second * 5) // Give the server a little break.
+	// check if project ids are defined, warn if not
+	if config.ProjectIDs == nil || len(*config.ProjectIDs) == 0 {
+		log.Warn("api", "No project IDs defined in config %d", *config.Id)
+		return nil
 	}
-}
 
-// outputData implements passing output data to broker. Remove if not needed.
-func outputData(asset appdb.Asset, config apiserver.Configuration, data map[string]interface{}) error {
-	// Do the output magic here.
+	// get all clusters from GP Joule API
+	clusters, err := gp_joule.GetClusters(config)
+	if err != nil {
+		log.Error("api", "Error collecting clusters: %v", err)
+		return err
+	}
+	log.Trace("api", "Clusters: %v", clusters)
+
+	// Create asset tree for each project id
+	for _, projectId := range *config.ProjectIDs {
+
+		// Create asset tree
+		root := model.Root{
+			Clusters: clusters,
+		}
+
+		// This is ugly but there is no other way to put the config into each element
+		root.Config = config
+		for _, cluster := range root.Clusters {
+			cluster.Config = config
+			for _, chargingPoint := range cluster.ChargePoints {
+				chargingPoint.Config = config
+				for _, connector := range chargingPoint.Connectors {
+					connector.Config = config
+				}
+			}
+		}
+
+		// create assets
+		assets, err := asset.CreateAssetsAndUpsertData(&root, projectId, nil, nil)
+
+		if err != nil {
+			log.Error("eliona", "Error creating assets: %v", err)
+			return err
+		}
+
+		log.Trace("eliona", "Assets created: %v", assets)
+	}
+
 	return nil
 }
 

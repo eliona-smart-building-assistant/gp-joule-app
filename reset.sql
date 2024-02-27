@@ -20,14 +20,14 @@
 SET SCHEMA 'public';
 
 DELETE FROM versioning.patches
-WHERE app_name = 'gp-joule';
+WHERE app_name = 'gp_joule';
 
 INSERT INTO public.eliona_store (app_name, category, version)
-VALUES ('gp-joule', 'app', '1.0.0')
+VALUES ('gp_joule', 'app', '1.0.0')
 	ON CONFLICT (app_name) DO UPDATE SET version = '1.0.0';
 
 INSERT INTO public.eliona_app (app_name, enable)
-VALUES ('gp-joule', 't')
+VALUES ('gp_joule', 't')
 	ON CONFLICT (app_name) DO UPDATE SET initialized_at = null;
 
 DROP SCHEMA IF EXISTS gp_joule CASCADE;
@@ -66,5 +66,5 @@ WHERE dashboard_id IN (
 DELETE FROM public.dashboard
 WHERE name LIKE 'GP Joule%';
 
--- DELETE FROM eliona_app WHERE app_name = 'gp-joule';
--- DELETE FROM eliona_store WHERE app_name = 'gp-joule';
+-- DELETE FROM eliona_app WHERE app_name = 'gp_joule';
+-- DELETE FROM eliona_store WHERE app_name = 'gp_joule';
