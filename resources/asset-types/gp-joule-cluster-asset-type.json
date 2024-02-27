@@ -1,0 +1,10 @@
+{
+	"attributes": [],
+	"custom": true,
+	"name": "gp_joule_cluster",
+	"translation": {
+		"de": "GP Joule Cluster",
+		"en": "GP Joule Cluster"
+	},
+	"vendor": "GP Joule"
+}

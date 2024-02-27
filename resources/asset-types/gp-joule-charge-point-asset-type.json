@@ -1,0 +1,10 @@
+{
+	"attributes": [],
+	"custom": true,
+	"name": "gp_joule_charge_point",
+	"translation": {
+		"de": "GP Joule Ladepunkt",
+		"en": "GP Joule Charge Point"
+	},
+	"vendor": "GP Joule"
+}

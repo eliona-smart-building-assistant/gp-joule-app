@@ -1,0 +1,10 @@
+{
+	"attributes": [],
+	"custom": true,
+	"name": "gp_joule_connector",
+	"translation": {
+		"de": "GP Joule Connector",
+		"en": "GP Joule Connector"
+	},
+	"vendor": "GP Joule"
+}
