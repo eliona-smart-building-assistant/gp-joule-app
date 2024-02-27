@@ -19,7 +19,8 @@ create schema if not exists gp_joule;
 create table if not exists gp_joule.configuration
 (
 	id                   bigserial primary key,
-	api_access_change_me text not null,
+    root_url             text not null,
+    api_key              text not null,
 	refresh_interval     integer not null default 60,
 	request_timeout      integer not null default 120,
 	asset_filter         json,
