@@ -121,19 +121,8 @@ func collectResources(config *apiserver.Configuration) error {
 
 		// Create asset tree
 		root := model.Root{
+			Config:   config,
 			Clusters: clusters,
-		}
-
-		// This is ugly but there is no other way to put the config into each element
-		root.Config = config
-		for _, cluster := range root.Clusters {
-			cluster.Config = config
-			for _, chargingPoint := range cluster.ChargePoints {
-				chargingPoint.Config = config
-				for _, connector := range chargingPoint.Connectors {
-					connector.Config = config
-				}
-			}
 		}
 
 		// create assets
@@ -152,6 +141,7 @@ func collectResources(config *apiserver.Configuration) error {
 
 // listenApi starts the API server and listen for requests
 func listenApi() {
+	log.Info("main", "Starting API server")
 	err := http.ListenAndServe(":"+common.Getenv("API_SERVER_PORT", "3000"),
 		frontend.NewEnvironmentHandler(
 			utilshttp.NewCORSEnabledHandler(

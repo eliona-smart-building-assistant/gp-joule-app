@@ -73,6 +73,7 @@ func (r *Root) GetFunctionalChildren() []asset.FunctionalNode {
 func (r *Root) GetLocationalChildren() []asset.LocationalNode {
 	locationalChildren := make([]asset.LocationalNode, 0)
 	for _, cluster := range r.Clusters {
+		cluster.Config = r.Config
 		locationalChildren = append(locationalChildren, cluster)
 	}
 	return locationalChildren
@@ -121,6 +122,7 @@ func (c *Cluster) SetAssetID(assetID int32, projectID string) error {
 func (c *Cluster) GetLocationalChildren() []asset.LocationalNode {
 	locationalChildren := make([]asset.LocationalNode, 0)
 	for _, chargingPoint := range c.ChargePoints {
+		chargingPoint.Config = c.Config
 		locationalChildren = append(locationalChildren, chargingPoint)
 	}
 	return locationalChildren
@@ -188,6 +190,7 @@ func (cp *ChargePoint) SetAssetID(assetID int32, projectID string) error {
 func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 	locationalChildren := make([]asset.LocationalNode, 0)
 	for _, connector := range cp.Connectors {
+		connector.Config = cp.Config
 		locationalChildren = append(locationalChildren, connector)
 	}
 	return locationalChildren
