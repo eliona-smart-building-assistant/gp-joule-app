@@ -53,9 +53,9 @@
 		{
 			"enable": true,
 			"name": "connectors_occupied",
-			"subtype": "status",
+			"subtype": "input",
 			"translation": {"de": "Anzahl belegt", "en": "Count occupied"},
-			"type": "people-count"
+			"type": "device-status"
 		}
 	]
 }

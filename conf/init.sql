@@ -37,7 +37,10 @@ create table if not exists gp_joule.asset
 	project_id       text      not null,
 	global_asset_id  text      not null,
 	provider_id      text      not null,
-	asset_id         integer
+	asset_id         integer,
+    asset_type       text,
+    init_version     integer,
+    latest_session_ts timestamp with time zone
 );
 
 -- Makes the new objects available for all other init steps

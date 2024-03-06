@@ -12,14 +12,14 @@
 			"name": "status",
 			"subtype": "status",
 			"translation": {"de": "Status", "en": "Status"},
-			"type": "people-count"
+			"type": "device-status"
 		},
 		{
 			"enable": true,
 			"name": "max_power",
 			"subtype": "info",
 			"translation": {"de": "Energie", "en": "Energy"},
-			"type": "device_info"
+			"type": "device-info"
 		},
 		{
 			"enable": true,

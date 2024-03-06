@@ -24,12 +24,15 @@ import (
 
 // Asset is an object representing the database table.
 type Asset struct {
-	ID              int64      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ConfigurationID int64      `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
-	ProjectID       string     `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
-	GlobalAssetID   string     `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
-	ProviderID      string     `boil:"provider_id" json:"provider_id" toml:"provider_id" yaml:"provider_id"`
-	AssetID         null.Int32 `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
+	ID              int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ConfigurationID int64       `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
+	ProjectID       string      `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
+	GlobalAssetID   string      `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
+	ProviderID      string      `boil:"provider_id" json:"provider_id" toml:"provider_id" yaml:"provider_id"`
+	AssetID         null.Int32  `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
+	AssetType       null.String `boil:"asset_type" json:"asset_type,omitempty" toml:"asset_type" yaml:"asset_type,omitempty"`
+	InitVersion     null.Int32  `boil:"init_version" json:"init_version,omitempty" toml:"init_version" yaml:"init_version,omitempty"`
+	LatestSessionTS null.Time   `boil:"latest_session_ts" json:"latest_session_ts,omitempty" toml:"latest_session_ts" yaml:"latest_session_ts,omitempty"`
 
 	R *assetR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L assetL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +45,9 @@ var AssetColumns = struct {
 	GlobalAssetID   string
 	ProviderID      string
 	AssetID         string
+	AssetType       string
+	InitVersion     string
+	LatestSessionTS string
 }{
 	ID:              "id",
 	ConfigurationID: "configuration_id",
@@ -49,6 +55,9 @@ var AssetColumns = struct {
 	GlobalAssetID:   "global_asset_id",
 	ProviderID:      "provider_id",
 	AssetID:         "asset_id",
+	AssetType:       "asset_type",
+	InitVersion:     "init_version",
+	LatestSessionTS: "latest_session_ts",
 }
 
 var AssetTableColumns = struct {
@@ -58,6 +67,9 @@ var AssetTableColumns = struct {
 	GlobalAssetID   string
 	ProviderID      string
 	AssetID         string
+	AssetType       string
+	InitVersion     string
+	LatestSessionTS string
 }{
 	ID:              "asset.id",
 	ConfigurationID: "asset.configuration_id",
@@ -65,6 +77,9 @@ var AssetTableColumns = struct {
 	GlobalAssetID:   "asset.global_asset_id",
 	ProviderID:      "asset.provider_id",
 	AssetID:         "asset.asset_id",
+	AssetType:       "asset.asset_type",
+	InitVersion:     "asset.init_version",
+	LatestSessionTS: "asset.latest_session_ts",
 }
 
 // Generated where
@@ -157,6 +172,80 @@ func (w whereHelpernull_Int32) NIN(slice []int32) qm.QueryMod {
 func (w whereHelpernull_Int32) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Int32) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) LIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" LIKE ?", x)
+}
+func (w whereHelpernull_String) NLIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT LIKE ?", x)
+}
+func (w whereHelpernull_String) ILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" ILIKE ?", x)
+}
+func (w whereHelpernull_String) NILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT ILIKE ?", x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
+type whereHelpernull_Time struct{ field string }
+
+func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var AssetWhere = struct {
 	ID              whereHelperint64
 	ConfigurationID whereHelperint64
@@ -164,6 +253,9 @@ var AssetWhere = struct {
 	GlobalAssetID   whereHelperstring
 	ProviderID      whereHelperstring
 	AssetID         whereHelpernull_Int32
+	AssetType       whereHelpernull_String
+	InitVersion     whereHelpernull_Int32
+	LatestSessionTS whereHelpernull_Time
 }{
 	ID:              whereHelperint64{field: "\"gp_joule\".\"asset\".\"id\""},
 	ConfigurationID: whereHelperint64{field: "\"gp_joule\".\"asset\".\"configuration_id\""},
@@ -171,6 +263,9 @@ var AssetWhere = struct {
 	GlobalAssetID:   whereHelperstring{field: "\"gp_joule\".\"asset\".\"global_asset_id\""},
 	ProviderID:      whereHelperstring{field: "\"gp_joule\".\"asset\".\"provider_id\""},
 	AssetID:         whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"asset_id\""},
+	AssetType:       whereHelpernull_String{field: "\"gp_joule\".\"asset\".\"asset_type\""},
+	InitVersion:     whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"init_version\""},
+	LatestSessionTS: whereHelpernull_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
 }
 
 // AssetRels is where relationship names are stored.
@@ -201,9 +296,9 @@ func (r *assetR) GetConfiguration() *Configuration {
 type assetL struct{}
 
 var (
-	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "provider_id", "asset_id"}
+	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "provider_id", "asset_id", "asset_type", "init_version", "latest_session_ts"}
 	assetColumnsWithoutDefault = []string{"project_id", "global_asset_id", "provider_id"}
-	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id"}
+	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id", "asset_type", "init_version", "latest_session_ts"}
 	assetPrimaryKeyColumns     = []string{"id"}
 	assetGeneratedColumns      = []string{}
 )

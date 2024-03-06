@@ -61,7 +61,7 @@ func (r *Root) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (r *Root) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), r.Config, projectID, r.GetGAI(), assetID, ""); err != nil {
+	if err := conf.InsertAsset(context.Background(), r.Config, projectID, r.GetGAI(), assetID, r.GetAssetType(), ""); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
@@ -114,7 +114,7 @@ func (c *Cluster) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (c *Cluster) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.Name); err != nil {
+	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.GetAssetType(), c.Name); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
@@ -182,7 +182,7 @@ func (cp *ChargePoint) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (cp *ChargePoint) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), cp.Config, projectID, cp.GetGAI(), assetID, cp.ChargePointId); err != nil {
+	if err := conf.InsertAsset(context.Background(), cp.Config, projectID, cp.GetGAI(), assetID, cp.GetAssetType(), cp.ChargePointId); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
@@ -235,7 +235,7 @@ func (c *Connector) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (c *Connector) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.Uuid); err != nil {
+	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.GetAssetType(), c.Uuid); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
