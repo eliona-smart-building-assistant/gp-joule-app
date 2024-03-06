@@ -40,7 +40,7 @@ create table if not exists gp_joule.asset
 	asset_id         integer,
     asset_type       text,
     init_version     integer   not null default 0,
-    latest_session_ts timestamp with time zone
+    latest_session_ts timestamp with time zone not null default '1900-01-01 00:00:00'
 );
 
 -- Makes the new objects available for all other init steps

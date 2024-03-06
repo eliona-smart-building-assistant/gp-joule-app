@@ -198,7 +198,7 @@ func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 	}
 
 	// Add one sessions container
-	locationalChildren = append(locationalChildren, &Sessions{
+	locationalChildren = append(locationalChildren, &ChargingSessions{
 		ChargePoint: cp,
 		Config:      cp.Config,
 	})
@@ -208,43 +208,43 @@ func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 
 // SESSIONS
 
-type Sessions struct {
+type ChargingSessions struct {
 	ChargePoint *ChargePoint
 	Config      *apiserver.Configuration
 }
 
-func (s *Sessions) GetName() string {
+func (s *ChargingSessions) GetName() string {
 	return fmt.Sprintf("%s sessions", s.ChargePoint.Name)
 }
 
-func (s *Sessions) GetDescription() string {
-	return fmt.Sprintf("Sessions for %s", s.ChargePoint.NameInternal)
+func (s *ChargingSessions) GetDescription() string {
+	return fmt.Sprintf("ChargingSessions for %s", s.ChargePoint.NameInternal)
 }
 
-func (s *Sessions) GetAssetType() string {
+func (s *ChargingSessions) GetAssetType() string {
 	return "gp_joule_resent_sessions"
 }
 
-func (s *Sessions) GetGAI() string {
+func (s *ChargingSessions) GetGAI() string {
 	return s.GetAssetType() + "_" + s.ChargePoint.ChargePointId
 }
 
-func (s *Sessions) AdheresToFilter(filter [][]apiserver.FilterRule) (bool, error) {
+func (s *ChargingSessions) AdheresToFilter(filter [][]apiserver.FilterRule) (bool, error) {
 	return adheresToFilter(s, filter)
 }
 
-func (s *Sessions) GetAssetID(projectID string) (*int32, error) {
+func (s *ChargingSessions) GetAssetID(projectID string) (*int32, error) {
 	return conf.GetAssetId(context.Background(), s.Config, projectID, s.GetGAI())
 }
 
-func (s *Sessions) SetAssetID(assetID int32, projectID string) error {
+func (s *ChargingSessions) SetAssetID(assetID int32, projectID string) error {
 	if err := conf.InsertAsset(context.Background(), s.Config, projectID, s.GetGAI(), assetID, s.GetAssetType(), s.ChargePoint.ChargePointId); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
 }
 
-func (s *Sessions) GetLocationalChildren() []asset.LocationalNode {
+func (s *ChargingSessions) GetLocationalChildren() []asset.LocationalNode {
 	return make([]asset.LocationalNode, 0)
 }
 
@@ -301,7 +301,7 @@ func (c *Connector) GetLocationalChildren() []asset.LocationalNode {
 type ChargingSession struct {
 	Id                       string      `json:"id"`
 	SessionStart             time.Time   `json:"session_start"`
-	SessionEnd               interface{} `json:"session_end"`
+	SessionEnd               time.Time   `json:"session_end"`
 	Duration                 int         `json:"duration"`
 	MeterStart               int         `json:"meter_start"`
 	MeterEnd                 int         `json:"meter_end"`
@@ -317,8 +317,6 @@ type ChargingSession struct {
 	InitialStateOfCharge     interface{} `json:"initial_state_of_charge"`
 	LastStateOfCharge        interface{} `json:"last_state_of_charge"`
 	StateOfChargeLastChanged interface{} `json:"state_of_charge_last_changed"`
-
-	Config apiserver.Configuration
 }
 
 // DEFAULT

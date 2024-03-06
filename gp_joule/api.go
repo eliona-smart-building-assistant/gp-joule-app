@@ -19,8 +19,10 @@ import (
 	"fmt"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
 	"gp-joule/apiserver"
+	"gp-joule/appdb"
 	"gp-joule/model"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -29,6 +31,45 @@ func GetClusters(config *apiserver.Configuration) ([]*model.Cluster, error) {
 
 	// create request
 	fullUrl := config.RootUrl + "/clusters"
+	request, err := request(config, fullUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	// read clusters
+	clusters, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.Cluster](request, time.Duration(*config.RequestTimeout)*time.Second, true)
+	if err != nil || statusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
+	}
+
+	return clusters, nil
+}
+
+func GetSessions(config *apiserver.Configuration, dbAsset *appdb.Asset) ([]*model.ChargingSession, error) {
+
+	// create request
+	isoFormat := "2006-01-02T15:04:05Z"
+	fullUrl := fmt.Sprintf("%s/chargelogs?from=%s&to=%s&chargepoint_id=%s", config.RootUrl, dbAsset.LatestSessionTS.Format(isoFormat), time.Now().Format(isoFormat), dbAsset.ProviderID)
+	request, err := request(config, fullUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	// read clusters
+	sessions, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.ChargingSession](request, time.Duration(*config.RequestTimeout)*time.Second, true)
+	if err != nil || statusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
+	}
+
+	// sort ascending by end date
+	sort.Slice(sessions, func(i, j int) bool {
+		return sessions[i].SessionEnd.Before(sessions[j].SessionEnd)
+	})
+
+	return sessions, nil
+}
+
+func request(config *apiserver.Configuration, fullUrl string) (*http.Request, error) {
 	request, err := utilshttp.NewRequestWithApiKey(fullUrl, "x-api-key", config.ApiKey)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request for %s: %w", fullUrl, err)
@@ -40,12 +81,5 @@ func GetClusters(config *apiserver.Configuration) ([]*model.Cluster, error) {
 		lowerCaseHeader[strings.ToLower(key)] = value
 	}
 	request.Header = lowerCaseHeader
-
-	// read clusters
-	clusters, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.Cluster](request, time.Duration(*config.RequestTimeout)*time.Second, true)
-	if err != nil || statusCode != http.StatusOK {
-		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
-	}
-
-	return clusters, nil
+	return request, nil
 }

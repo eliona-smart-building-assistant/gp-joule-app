@@ -23,12 +23,16 @@ import (
 	"github.com/eliona-smart-building-assistant/go-eliona/client"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"gp-joule/apiserver"
 	"gp-joule/appdb"
 )
 
 // InitAssets initializes the assets created before. This contains creation of pipeline aggregation and rules for alarms
-func InitAssets(projectId string) error {
-	dbAssets, err := appdb.Assets(appdb.AssetWhere.ProjectID.EQ(projectId), appdb.AssetWhere.InitVersion.LTE(1)).AllG(context.Background())
+func InitAssets(config *apiserver.Configuration) error {
+	dbAssets, err := appdb.Assets(
+		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
+		appdb.AssetWhere.InitVersion.LTE(1),
+	).AllG(context.Background())
 	if err != nil {
 		return err
 	}

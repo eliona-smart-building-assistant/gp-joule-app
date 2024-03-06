@@ -32,7 +32,7 @@ type Asset struct {
 	AssetID         null.Int32  `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
 	AssetType       null.String `boil:"asset_type" json:"asset_type,omitempty" toml:"asset_type" yaml:"asset_type,omitempty"`
 	InitVersion     int32       `boil:"init_version" json:"init_version" toml:"init_version" yaml:"init_version"`
-	LatestSessionTS null.Time   `boil:"latest_session_ts" json:"latest_session_ts,omitempty" toml:"latest_session_ts" yaml:"latest_session_ts,omitempty"`
+	LatestSessionTS time.Time   `boil:"latest_session_ts" json:"latest_session_ts" toml:"latest_session_ts" yaml:"latest_session_ts"`
 
 	R *assetR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L assetL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -245,29 +245,26 @@ func (w whereHelperint32) NIN(slice []int32) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelpernull_Time struct{ field string }
+type whereHelpertime_Time struct{ field string }
 
-func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
+func (w whereHelpertime_Time) EQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.EQ, x)
 }
-func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
+func (w whereHelpertime_Time) NEQ(x time.Time) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
 }
-func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) LT(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LT, x)
 }
-func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) LTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.LTE, x)
 }
-func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) GT(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GT, x)
 }
-func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
+func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 	return qmhelper.Where(w.field, qmhelper.GTE, x)
 }
-
-func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var AssetWhere = struct {
 	ID              whereHelperint64
@@ -278,7 +275,7 @@ var AssetWhere = struct {
 	AssetID         whereHelpernull_Int32
 	AssetType       whereHelpernull_String
 	InitVersion     whereHelperint32
-	LatestSessionTS whereHelpernull_Time
+	LatestSessionTS whereHelpertime_Time
 }{
 	ID:              whereHelperint64{field: "\"gp_joule\".\"asset\".\"id\""},
 	ConfigurationID: whereHelperint64{field: "\"gp_joule\".\"asset\".\"configuration_id\""},
@@ -288,7 +285,7 @@ var AssetWhere = struct {
 	AssetID:         whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"asset_id\""},
 	AssetType:       whereHelpernull_String{field: "\"gp_joule\".\"asset\".\"asset_type\""},
 	InitVersion:     whereHelperint32{field: "\"gp_joule\".\"asset\".\"init_version\""},
-	LatestSessionTS: whereHelpernull_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
+	LatestSessionTS: whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
 }
 
 // AssetRels is where relationship names are stored.

@@ -17,8 +17,12 @@ package main
 
 import (
 	"context"
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gp-joule/apiserver"
 	"gp-joule/apiservices"
+	"gp-joule/appdb"
 	"gp-joule/conf"
 	"gp-joule/eliona"
 	"gp-joule/gp_joule"
@@ -90,8 +94,12 @@ func collectData() {
 		}
 
 		common.RunOnceWithParam(func(config apiserver.Configuration) {
+
 			log.Info("main", "Collecting %d started.", *config.Id)
 			if err := collectResources(&config); err != nil {
+				return // Error is handled in the method itself.
+			}
+			if err := sendSessions(&config); err != nil {
 				return // Error is handled in the method itself.
 			}
 			log.Info("main", "Collecting %d finished.", *config.Id)
@@ -133,18 +141,79 @@ func collectResources(config *apiserver.Configuration) error {
 			return err
 		}
 
-		// init assets
-		err = eliona.InitAssets(projectId)
-		if err != nil {
-			log.Error("eliona", "Error creating assets: %v", err)
-			return err
-		}
-
 		log.Trace("eliona", "Assets created: %v", assets)
 	}
 
-	// Get all sessions
+	// init assets
+	err = eliona.InitAssets(config)
+	if err != nil {
+		log.Error("eliona", "Error creating assets: %v", err)
+		return err
+	}
 
+	return nil
+}
+
+func sendSessions(config *apiserver.Configuration) error {
+	dbAssets, err := appdb.Assets(
+		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
+		appdb.AssetWhere.InitVersion.LTE(1),
+		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_resent_sessions")),
+	).AllG(context.Background())
+
+	if err != nil {
+		return err
+	}
+	for _, dbAsset := range dbAssets {
+
+		// check if asset still exists in Eliona
+		exists, err := asset.ExistAsset(dbAsset.AssetID.Int32)
+		if err != nil {
+			log.Error("api", "Error during checking if asset exists in Eliona: %v", err)
+			return err
+		}
+		if !exists {
+			return nil
+		}
+
+		// get all sessions
+		sessions, err := gp_joule.GetSessions(config, dbAsset)
+		if err != nil {
+			log.Error("api", "Error collecting sessions: %v", err)
+			return err
+		}
+		log.Trace("api", "Clusters: %v", sessions)
+
+		// send sessions to Eliona
+		for _, session := range sessions {
+
+			if session.Status == "stopped" && session.MeterTotal > 0 {
+
+				err = asset.UpsertData(api.Data{
+					AssetId:   dbAsset.AssetID.Int32,
+					Subtype:   "input",
+					Timestamp: *api.NewNullableTime(&session.SessionEnd),
+					Data: map[string]any{
+						"session_count":       1,
+						"session_power":       session.MeterTotal,
+						"session_total_power": session.MeterTotal,
+					},
+				})
+				if err != nil {
+					log.Error("api", "Error upserting data in Eliona: %v", err)
+					return err
+				}
+
+			}
+
+			dbAsset.LatestSessionTS = session.SessionEnd
+			_, err = dbAsset.UpdateG(context.Background(), boil.Whitelist(appdb.AssetColumns.LatestSessionTS))
+			if err != nil {
+				log.Error("api", "Error updating asset latest session timestamp: %v", err)
+				return err
+			}
+		}
+	}
 	return nil
 }
 
