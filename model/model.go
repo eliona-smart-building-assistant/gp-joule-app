@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"gp-joule/apiserver"
 	"gp-joule/conf"
+	"strings"
 	"time"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
@@ -137,11 +138,11 @@ type ChargePoint struct {
 	NameInternal        string       `json:"name_internal" eliona:"name_internal,filterable"`
 	Status              string       `json:"status" eliona:"status" subtype:"status"`
 	CommunicationStatus int          `json:"communication_status"`
-	ConnectorsTotal     int          `json:"connectors_total"`
+	ConnectorsTotal     int          `json:"connectors_total" eliona:"connectors_total" subtype:"info"`
 	ConnectorsFree      int          `json:"connectors_free"`
 	ConnectorsFaulted   int          `json:"connectors_faulted"`
-	ConnectorsOccupied  int          `json:"connectors_occupied"`
-	Manufacturer        string       `json:"manufacturer"`
+	ConnectorsOccupied  int          `json:"connectors_occupied" eliona:"connectors_occupied" subtype:"input"`
+	Manufacturer        string       `json:"manufacturer" eliona:"manufacturer,filterable" subtype:"info"`
 	Model               string       `json:"model" eliona:"model,filterable" subtype:"info"`
 	Lat                 float64      `json:"lat"`
 	Long                float64      `json:"long"`
@@ -203,18 +204,18 @@ type Connector struct {
 	EvseId          string `json:"evseid"`
 	Status          string `json:"status" eliona:"status" subtype:"status"`
 	MaxPower        int    `json:"max_power" eliona:"max_power" subtype:"info"`
-	ChargePointType string `json:"chargepoint_type" eliona:"chargepoint_type,filterable" subtype:"info"`
-	PlugType        string `json:"plug_type" eliona:"plug_type,filterable" subtype:"info"`
+	ChargePointType string `json:"chargepoint_type"`
+	PlugType        string `json:"plug_type" eliona:"plug_type,filterable"`
 
 	Config *apiserver.Configuration
 }
 
 func (c *Connector) GetName() string {
-	return c.EvseId
+	return strings.Trim(c.PlugType+" "+c.ChargePointType, " ")
 }
 
 func (c *Connector) GetDescription() string {
-	return c.ChargePointType + " " + c.PlugType
+	return c.ChargePointType
 }
 
 func (c *Connector) GetAssetType() string {

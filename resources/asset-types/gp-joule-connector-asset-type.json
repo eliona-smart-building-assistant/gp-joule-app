@@ -1,10 +1,25 @@
 {
-	"attributes": [],
 	"custom": true,
 	"name": "gp_joule_connector",
 	"translation": {
-		"de": "GP Joule Connector",
+		"de": "GP Joule Konnektor",
 		"en": "GP Joule Connector"
 	},
-	"vendor": "GP Joule"
+	"vendor": "GP Joule",
+	"attributes": [
+		{
+			"enable": true,
+			"name": "status",
+			"subtype": "status",
+			"translation": {"de": "Status", "en": "Status"},
+			"type": "people-count"
+		},
+		{
+			"enable": true,
+			"name": "max_power",
+			"subtype": "info",
+			"translation": {"de": "Energie", "en": "Energy"},
+			"type": "device_info"
+		}
+	]
 }
