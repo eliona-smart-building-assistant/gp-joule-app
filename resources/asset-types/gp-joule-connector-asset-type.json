@@ -20,6 +20,27 @@
 			"subtype": "info",
 			"translation": {"de": "Energie", "en": "Energy"},
 			"type": "device_info"
+		},
+		{
+			"enable": true,
+			"name": "current_power",
+			"subtype": "input",
+			"translation": {"de": "Energie", "en": "Energy"},
+			"type": "device-status"
+		},
+		{
+			"enable": true,
+			"name": "current_costs",
+			"subtype": "input",
+			"translation": {"de": "Kosten", "en": "Costs"},
+			"type": "device-status"
+		},
+		{
+			"enable": true,
+			"name": "current_duration",
+			"subtype": "input",
+			"translation": {"de": "Dauer", "en": "Duration"},
+			"type": "device-status"
 		}
 	]
 }
