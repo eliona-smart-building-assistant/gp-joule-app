@@ -20,14 +20,14 @@
 SET SCHEMA 'public';
 
 DELETE FROM versioning.patches
-WHERE app_name = 'gp_joule';
+WHERE app_name = 'gp-joule';
 
 INSERT INTO public.eliona_store (app_name, category, version)
-VALUES ('gp_joule', 'app', '1.0.0')
+VALUES ('gp-joule', 'app', '1.0.0')
 	ON CONFLICT (app_name) DO UPDATE SET version = '1.0.0';
 
 INSERT INTO public.eliona_app (app_name, enable)
-VALUES ('gp_joule', 't')
+VALUES ('gp-joule', 't')
 	ON CONFLICT (app_name) DO UPDATE SET initialized_at = null;
 
 DROP SCHEMA IF EXISTS gp_joule CASCADE;
