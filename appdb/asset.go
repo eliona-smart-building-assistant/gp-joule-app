@@ -31,7 +31,7 @@ type Asset struct {
 	ProviderID      string      `boil:"provider_id" json:"provider_id" toml:"provider_id" yaml:"provider_id"`
 	AssetID         null.Int32  `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
 	AssetType       null.String `boil:"asset_type" json:"asset_type,omitempty" toml:"asset_type" yaml:"asset_type,omitempty"`
-	InitVersion     null.Int32  `boil:"init_version" json:"init_version,omitempty" toml:"init_version" yaml:"init_version,omitempty"`
+	InitVersion     int32       `boil:"init_version" json:"init_version" toml:"init_version" yaml:"init_version"`
 	LatestSessionTS null.Time   `boil:"latest_session_ts" json:"latest_session_ts,omitempty" toml:"latest_session_ts" yaml:"latest_session_ts,omitempty"`
 
 	R *assetR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -222,6 +222,29 @@ func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
 func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelperint32 struct{ field string }
+
+func (w whereHelperint32) EQ(x int32) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint32) NEQ(x int32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint32) LT(x int32) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint32) LTE(x int32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint32) GT(x int32) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint32) GTE(x int32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint32) IN(slice []int32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint32) NIN(slice []int32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 type whereHelpernull_Time struct{ field string }
 
 func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
@@ -254,7 +277,7 @@ var AssetWhere = struct {
 	ProviderID      whereHelperstring
 	AssetID         whereHelpernull_Int32
 	AssetType       whereHelpernull_String
-	InitVersion     whereHelpernull_Int32
+	InitVersion     whereHelperint32
 	LatestSessionTS whereHelpernull_Time
 }{
 	ID:              whereHelperint64{field: "\"gp_joule\".\"asset\".\"id\""},
@@ -264,7 +287,7 @@ var AssetWhere = struct {
 	ProviderID:      whereHelperstring{field: "\"gp_joule\".\"asset\".\"provider_id\""},
 	AssetID:         whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"asset_id\""},
 	AssetType:       whereHelpernull_String{field: "\"gp_joule\".\"asset\".\"asset_type\""},
-	InitVersion:     whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"init_version\""},
+	InitVersion:     whereHelperint32{field: "\"gp_joule\".\"asset\".\"init_version\""},
 	LatestSessionTS: whereHelpernull_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
 }
 

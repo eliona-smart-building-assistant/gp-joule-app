@@ -16,27 +16,70 @@
 package eliona
 
 import (
+	"context"
 	"fmt"
-	"gp-joule/apiserver"
-
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"github.com/eliona-smart-building-assistant/go-eliona/client"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"gp-joule/appdb"
 )
 
-func CreateAssets(config apiserver.Configuration, root asset.Root) error {
-	for _, projectId := range *config.ProjectIDs {
-		assetsCreated, err := asset.CreateAssets(root, projectId)
+// InitAssets initializes the assets created before. This contains creation of pipeline aggregation and rules for alarms
+func InitAssets(projectId string) error {
+	dbAssets, err := appdb.Assets(appdb.AssetWhere.ProjectID.EQ(projectId), appdb.AssetWhere.InitVersion.LTE(1)).AllG(context.Background())
+	if err != nil {
+		return err
+	}
+	for _, dbAsset := range dbAssets {
+		err = initAsset(dbAsset)
 		if err != nil {
 			return err
 		}
-		if assetsCreated != 0 {
-			if err := notifyUser(*config.UserId, projectId, assetsCreated); err != nil {
-				return fmt.Errorf("notifying user about CAC: %v", err)
-			}
+	}
+	return nil
+}
+
+func initAsset(dbAsset *appdb.Asset) error {
+	if dbAsset == nil {
+		return nil
+	}
+	if dbAsset.InitVersion <= 0 {
+		err := initAssetV1(dbAsset)
+		if err != nil {
+			return err
+		}
+		dbAsset.InitVersion = 1
+		_, err = dbAsset.UpdateG(context.Background(), boil.Whitelist(appdb.AssetColumns.InitVersion))
+		if err != nil {
+			return err
 		}
 	}
+	if dbAsset.InitVersion <= 1 {
+		// Place for init during a patch of new app version
+	}
+	return nil
+}
+
+func initAssetV1(dbAsset *appdb.Asset) error {
+
+	// check if asset still exists in Eliona
+	exists, err := asset.ExistAsset(dbAsset.AssetID.Int32)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+
+	if dbAsset.AssetType.String == "gp_joule_charge_point" {
+
+		// Set alarm rules
+		// ...
+
+	}
+
 	return nil
 }
 

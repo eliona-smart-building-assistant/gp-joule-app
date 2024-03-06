@@ -19,14 +19,20 @@
 			"name": "max_power",
 			"subtype": "info",
 			"translation": {"de": "Energie", "en": "Energy"},
-			"type": "device-info"
+			"type": "device-info",
+			"unit": "kWh"
 		},
 		{
 			"enable": true,
 			"name": "current_power",
 			"subtype": "input",
 			"translation": {"de": "Energie", "en": "Energy"},
-			"type": "device-status"
+			"type": "device-status",
+			"unit": "kWh",
+			"aggregationMode": "avg",
+			"aggregationRasters": [
+				"DAY"
+			]
 		},
 		{
 			"enable": true,

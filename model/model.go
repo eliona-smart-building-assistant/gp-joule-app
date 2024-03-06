@@ -190,11 +190,62 @@ func (cp *ChargePoint) SetAssetID(assetID int32, projectID string) error {
 
 func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 	locationalChildren := make([]asset.LocationalNode, 0)
+
+	// Add connectors
 	for _, connector := range cp.Connectors {
 		connector.Config = cp.Config
 		locationalChildren = append(locationalChildren, connector)
 	}
+
+	// Add one sessions container
+	locationalChildren = append(locationalChildren, &Sessions{
+		ChargePoint: cp,
+		Config:      cp.Config,
+	})
+
 	return locationalChildren
+}
+
+// SESSIONS
+
+type Sessions struct {
+	ChargePoint *ChargePoint
+	Config      *apiserver.Configuration
+}
+
+func (s *Sessions) GetName() string {
+	return fmt.Sprintf("%s sessions", s.ChargePoint.Name)
+}
+
+func (s *Sessions) GetDescription() string {
+	return fmt.Sprintf("Sessions for %s", s.ChargePoint.NameInternal)
+}
+
+func (s *Sessions) GetAssetType() string {
+	return "gp_joule_resent_sessions"
+}
+
+func (s *Sessions) GetGAI() string {
+	return s.GetAssetType() + "_" + s.ChargePoint.ChargePointId
+}
+
+func (s *Sessions) AdheresToFilter(filter [][]apiserver.FilterRule) (bool, error) {
+	return adheresToFilter(s, filter)
+}
+
+func (s *Sessions) GetAssetID(projectID string) (*int32, error) {
+	return conf.GetAssetId(context.Background(), s.Config, projectID, s.GetGAI())
+}
+
+func (s *Sessions) SetAssetID(assetID int32, projectID string) error {
+	if err := conf.InsertAsset(context.Background(), s.Config, projectID, s.GetGAI(), assetID, s.GetAssetType(), s.ChargePoint.ChargePointId); err != nil {
+		return fmt.Errorf("inserting asset to Config db: %v", err)
+	}
+	return nil
+}
+
+func (s *Sessions) GetLocationalChildren() []asset.LocationalNode {
+	return make([]asset.LocationalNode, 0)
 }
 
 // CONNECTOR

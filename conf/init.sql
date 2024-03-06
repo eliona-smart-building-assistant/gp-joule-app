@@ -39,7 +39,7 @@ create table if not exists gp_joule.asset
 	provider_id      text      not null,
 	asset_id         integer,
     asset_type       text,
-    init_version     integer,
+    init_version     integer   not null default 0,
     latest_session_ts timestamp with time zone
 );
 

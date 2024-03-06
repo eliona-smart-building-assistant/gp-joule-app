@@ -10,20 +10,6 @@
 	"attributes": [
 		{
 			"enable": true,
-			"name": "recent_session",
-			"subtype": "input",
-			"translation": {"de": "Anzahl", "en": "Count"},
-			"type": "frequency"
-		},
-		{
-			"enable": true,
-			"name": "recent_power",
-			"subtype": "input",
-			"translation": {"de": "Energie", "en": "Energy"},
-			"type": "power"
-		},
-		{
-			"enable": true,
 			"name": "status",
 			"subtype": "status",
 			"translation": {"de": "Status", "en": "Status"},

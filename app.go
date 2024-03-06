@@ -20,6 +20,7 @@ import (
 	"gp-joule/apiserver"
 	"gp-joule/apiservices"
 	"gp-joule/conf"
+	"gp-joule/eliona"
 	"gp-joule/gp_joule"
 	"gp-joule/model"
 	"net/http"
@@ -127,7 +128,13 @@ func collectResources(config *apiserver.Configuration) error {
 
 		// create assets
 		assets, err := asset.CreateAssetsAndUpsertData(&root, projectId, nil, nil)
+		if err != nil {
+			log.Error("eliona", "Error creating assets: %v", err)
+			return err
+		}
 
+		// init assets
+		err = eliona.InitAssets(projectId)
 		if err != nil {
 			log.Error("eliona", "Error creating assets: %v", err)
 			return err
@@ -135,6 +142,8 @@ func collectResources(config *apiserver.Configuration) error {
 
 		log.Trace("eliona", "Assets created: %v", assets)
 	}
+
+	// Get all sessions
 
 	return nil
 }

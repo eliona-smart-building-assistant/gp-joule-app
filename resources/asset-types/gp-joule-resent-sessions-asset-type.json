@@ -1,0 +1,47 @@
+{
+	"custom": true,
+	"name": "gp_joule_resent_sessions",
+	"translation": {
+		"de": "GP Joule Vorgänge",
+		"en": "GP Joule Sessions"
+	},
+	"vendor": "GP Joule",
+	"icon": "power",
+	"attributes": [
+		{
+			"enable": true,
+			"name": "session_count",
+			"subtype": "input",
+			"translation": {"de": "Anzahl", "en": "Count"},
+			"type": "frequency",
+			"aggregationMode": "sum",
+			"aggregationRasters": [
+				"DAY", "DECADE"
+			]
+		},
+		{
+			"enable": true,
+			"name": "session_power",
+			"subtype": "input",
+			"translation": {"de": "Energie", "en": "Energy"},
+			"type": "power",
+			"unit": "kWh",
+			"aggregationMode": "avg",
+			"aggregationRasters": [
+				"DAY", "DECADE"
+			]
+		},
+		{
+			"enable": true,
+			"name": "session_total_power",
+			"subtype": "input",
+			"translation": {"de": "Gesamtenergie", "en": "Total energy"},
+			"type": "power",
+			"unit": "kWh",
+			"aggregationMode": "sum",
+			"aggregationRasters": [
+				"DAY", "DECADE"
+			]
+		}
+	]
+}
