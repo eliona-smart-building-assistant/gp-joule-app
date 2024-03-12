@@ -1,6 +1,6 @@
 {
 	"attributes": [],
-	"custom": true,
+	"custom": false,
 	"name": "gp_joule_root",
 	"translation": {
 		"de": "GP Joule",

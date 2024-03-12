@@ -61,12 +61,20 @@ func GetSessions(config *apiserver.Configuration, dbAsset *appdb.Asset) ([]*mode
 		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
 	}
 
+	// filtering out sessions with nil SessionEnd
+	var filteredSessions []*model.ChargingSession
+	for _, session := range sessions {
+		if session.SessionEnd != nil {
+			filteredSessions = append(filteredSessions, session)
+		}
+	}
+
 	// sort ascending by end date
-	sort.Slice(sessions, func(i, j int) bool {
-		return sessions[i].SessionEnd.Before(sessions[j].SessionEnd)
+	sort.Slice(filteredSessions, func(i, j int) bool {
+		return filteredSessions[i].SessionEnd.Before(*filteredSessions[j].SessionEnd)
 	})
 
-	return sessions, nil
+	return filteredSessions, nil
 }
 
 func request(config *apiserver.Configuration, fullUrl string) (*http.Request, error) {

@@ -33,6 +33,7 @@ type Asset struct {
 	AssetType       null.String `boil:"asset_type" json:"asset_type,omitempty" toml:"asset_type" yaml:"asset_type,omitempty"`
 	InitVersion     int32       `boil:"init_version" json:"init_version" toml:"init_version" yaml:"init_version"`
 	LatestSessionTS time.Time   `boil:"latest_session_ts" json:"latest_session_ts" toml:"latest_session_ts" yaml:"latest_session_ts"`
+	LatestErrorTS   time.Time   `boil:"latest_error_ts" json:"latest_error_ts" toml:"latest_error_ts" yaml:"latest_error_ts"`
 
 	R *assetR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L assetL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +49,7 @@ var AssetColumns = struct {
 	AssetType       string
 	InitVersion     string
 	LatestSessionTS string
+	LatestErrorTS   string
 }{
 	ID:              "id",
 	ConfigurationID: "configuration_id",
@@ -58,6 +60,7 @@ var AssetColumns = struct {
 	AssetType:       "asset_type",
 	InitVersion:     "init_version",
 	LatestSessionTS: "latest_session_ts",
+	LatestErrorTS:   "latest_error_ts",
 }
 
 var AssetTableColumns = struct {
@@ -70,6 +73,7 @@ var AssetTableColumns = struct {
 	AssetType       string
 	InitVersion     string
 	LatestSessionTS string
+	LatestErrorTS   string
 }{
 	ID:              "asset.id",
 	ConfigurationID: "asset.configuration_id",
@@ -80,6 +84,7 @@ var AssetTableColumns = struct {
 	AssetType:       "asset.asset_type",
 	InitVersion:     "asset.init_version",
 	LatestSessionTS: "asset.latest_session_ts",
+	LatestErrorTS:   "asset.latest_error_ts",
 }
 
 // Generated where
@@ -276,6 +281,7 @@ var AssetWhere = struct {
 	AssetType       whereHelpernull_String
 	InitVersion     whereHelperint32
 	LatestSessionTS whereHelpertime_Time
+	LatestErrorTS   whereHelpertime_Time
 }{
 	ID:              whereHelperint64{field: "\"gp_joule\".\"asset\".\"id\""},
 	ConfigurationID: whereHelperint64{field: "\"gp_joule\".\"asset\".\"configuration_id\""},
@@ -286,6 +292,7 @@ var AssetWhere = struct {
 	AssetType:       whereHelpernull_String{field: "\"gp_joule\".\"asset\".\"asset_type\""},
 	InitVersion:     whereHelperint32{field: "\"gp_joule\".\"asset\".\"init_version\""},
 	LatestSessionTS: whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
+	LatestErrorTS:   whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_error_ts\""},
 }
 
 // AssetRels is where relationship names are stored.
@@ -316,9 +323,9 @@ func (r *assetR) GetConfiguration() *Configuration {
 type assetL struct{}
 
 var (
-	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "provider_id", "asset_id", "asset_type", "init_version", "latest_session_ts"}
+	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "provider_id", "asset_id", "asset_type", "init_version", "latest_session_ts", "latest_error_ts"}
 	assetColumnsWithoutDefault = []string{"project_id", "global_asset_id", "provider_id"}
-	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id", "asset_type", "init_version", "latest_session_ts"}
+	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id", "asset_type", "init_version", "latest_session_ts", "latest_error_ts"}
 	assetPrimaryKeyColumns     = []string{"id"}
 	assetGeneratedColumns      = []string{}
 )

@@ -79,6 +79,8 @@ func initAssetV1(dbAsset *appdb.Asset) error {
 
 	if dbAsset.AssetType.String == "gp_joule_charge_point" {
 
+		log.Debug("eliona", "Init version 1 of asset %d", dbAsset.AssetID.Int32)
+
 		// Set alarm rules
 		// ...
 
@@ -87,22 +89,21 @@ func initAssetV1(dbAsset *appdb.Asset) error {
 	return nil
 }
 
-func notifyUser(userId string, projectId string, assetsCreated int) error {
-	receipt, _, err := client.NewClient().CommunicationAPI.
-		PostNotification(client.AuthenticationContext()).
-		Notification(
-			api.Notification{
-				User:      userId,
-				ProjectId: *api.NewNullableString(&projectId),
-				Message: *api.NewNullableTranslation(&api.Translation{
-					De: api.PtrString(fmt.Sprintf("GP Joule App hat %d neue Assets angelegt. Diese sind nun im Asset-Management verfügbar.", assetsCreated)),
-					En: api.PtrString(fmt.Sprintf("GP Joule app added %v new assets. They are now available in Asset Management.", assetsCreated)),
-				}),
-			}).
-		Execute()
-	log.Debug("eliona", "posted notification about CAC: %v", receipt)
-	if err != nil {
-		return fmt.Errorf("posting CAC notification: %v", err)
+func NotifyUser(userId *string, projectId string, translation *api.Translation) error {
+	if userId != nil {
+		receipt, _, err := client.NewClient().CommunicationAPI.
+			PostNotification(client.AuthenticationContext()).
+			Notification(
+				api.Notification{
+					User:      *userId,
+					ProjectId: *api.NewNullableString(&projectId),
+					Message:   *api.NewNullableTranslation(translation),
+				}).
+			Execute()
+		log.Debug("eliona", "posted notification about CAC: %v", receipt)
+		if err != nil {
+			return fmt.Errorf("posting CAC notification: %v", err)
+		}
 	}
 	return nil
 }

@@ -1,5 +1,5 @@
 {
-	"custom": true,
+	"custom": false,
 	"name": "gp_joule_charge_point",
 	"translation": {
 		"de": "GP Joule Ladepunkt",
@@ -8,13 +8,6 @@
 	"vendor": "GP Joule",
 	"icon": "power",
 	"attributes": [
-		{
-			"enable": true,
-			"name": "status",
-			"subtype": "status",
-			"translation": {"de": "Status", "en": "Status"},
-			"type": "operating-status"
-		},
 		{
 			"enable": true,
 			"name": "model",
@@ -34,14 +27,45 @@
 			"name": "connectors_total",
 			"subtype": "info",
 			"translation": {"de": "Anzahl Konnektoren", "en": "Count connectors"},
-			"type": "level"
+			"type": "device-info"
+		},
+		{
+			"enable": true,
+			"name": "status",
+			"subtype": "status",
+			"translation": {"de": "Status", "en": "Status"},
+			"type": "operating-status"
 		},
 		{
 			"enable": true,
 			"name": "connectors_occupied",
-			"subtype": "input",
+			"subtype": "status",
 			"translation": {"de": "Anzahl belegt", "en": "Count occupied"},
 			"type": "device-status"
+		},
+		{
+			"enable": true,
+			"name": "energy",
+			"subtype": "input",
+			"translation": {"de": "Energie", "en": "Energy"},
+			"type": "energy",
+			"unit": "Wh",
+			"aggregationMode": "sum",
+			"aggregationRasters": [
+				"DAY", "DECADE"
+			]
+		},
+		{
+			"enable": true,
+			"name": "duration",
+			"subtype": "input",
+			"translation": {"de": "Dauer", "en": "Duration"},
+			"type": "flow",
+			"unit": "s",
+			"aggregationMode": "sum",
+			"aggregationRasters": [
+				"DAY", "DECADE"
+			]
 		}
 	]
 }

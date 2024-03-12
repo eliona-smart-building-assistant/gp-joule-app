@@ -1,5 +1,5 @@
 {
-	"custom": true,
+	"custom": false,
 	"name": "gp_joule_connector",
 	"translation": {
 		"de": "GP Joule Konnektor",
@@ -16,37 +16,48 @@
 		},
 		{
 			"enable": true,
+			"name": "occupied",
+			"subtype": "status",
+			"translation": {"de": "Besetzt", "en": "Occupied"},
+			"type": "device-status"
+		},
+		{
+			"enable": true,
+			"name": "error",
+			"subtype": "status",
+			"translation": {"de": "Fehler", "en": "Error"},
+			"type": "device-status"
+		},
+		{
+			"enable": true,
+			"name": "error_message",
+			"subtype": "status",
+			"translation": {"de": "Fehlermeldung", "en": "Error message"},
+			"type": "device-status"
+		},
+		{
+			"enable": true,
 			"name": "max_power",
 			"subtype": "info",
-			"translation": {"de": "Energie", "en": "Energy"},
-			"type": "device-info",
-			"unit": "kWh"
+			"translation": {"de": "Leistung", "en": "Power"},
+			"type": "power",
+			"unit": "W"
 		},
 		{
 			"enable": true,
-			"name": "current_power",
+			"name": "current_energy",
 			"subtype": "input",
 			"translation": {"de": "Energie", "en": "Energy"},
-			"type": "device-status",
-			"unit": "kWh",
-			"aggregationMode": "avg",
-			"aggregationRasters": [
-				"DAY"
-			]
-		},
-		{
-			"enable": true,
-			"name": "current_costs",
-			"subtype": "input",
-			"translation": {"de": "Kosten", "en": "Costs"},
-			"type": "device-status"
+			"type": "energy",
+			"unit": "Wh"
 		},
 		{
 			"enable": true,
 			"name": "current_duration",
 			"subtype": "input",
 			"translation": {"de": "Dauer", "en": "Duration"},
-			"type": "device-status"
+			"type": "flow",
+			"unit": "s"
 		}
 	]
 }

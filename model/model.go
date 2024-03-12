@@ -194,6 +194,16 @@ func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 	// Add connectors
 	for _, connector := range cp.Connectors {
 		connector.Config = cp.Config
+		if connector.ChargingSession != nil {
+			connector.Duration = connector.ChargingSession.Duration
+			connector.MeterTotal = connector.ChargingSession.MeterTotal
+			connector.Occupied = -1
+			if connector.Status == "available" {
+				connector.Occupied = 0
+			} else if connector.Status == "occupied" {
+				connector.Occupied = 1
+			}
+		}
 		locationalChildren = append(locationalChildren, connector)
 	}
 
@@ -222,7 +232,7 @@ func (s *ChargingSessions) GetDescription() string {
 }
 
 func (s *ChargingSessions) GetAssetType() string {
-	return "gp_joule_resent_sessions"
+	return "gp_joule_completed_sessions"
 }
 
 func (s *ChargingSessions) GetGAI() string {
@@ -251,12 +261,16 @@ func (s *ChargingSessions) GetLocationalChildren() []asset.LocationalNode {
 // CONNECTOR
 
 type Connector struct {
-	Uuid            string `json:"uuid"`
-	EvseId          string `json:"evseid"`
-	Status          string `json:"status" eliona:"status" subtype:"status"`
-	MaxPower        int    `json:"max_power" eliona:"max_power" subtype:"info"`
-	ChargePointType string `json:"chargepoint_type"`
-	PlugType        string `json:"plug_type" eliona:"plug_type,filterable"`
+	Uuid            string           `json:"uuid"`
+	EvseId          string           `json:"evseid"`
+	Status          string           `json:"status" eliona:"status" subtype:"status"`
+	MaxPower        int              `json:"max_power" eliona:"max_power" subtype:"info"`
+	ChargePointType string           `json:"chargepoint_type"`
+	PlugType        string           `json:"plug_type" eliona:"plug_type,filterable"`
+	MeterTotal      int              `eliona:"current_energy" subtype:"input"`
+	Duration        int              `eliona:"current_duration" subtype:"input"`
+	Occupied        int              `eliona:"occupied" subtype:"status"`
+	ChargingSession *ChargingSession `json:"charging_session"`
 
 	Config *apiserver.Configuration
 }
@@ -300,8 +314,8 @@ func (c *Connector) GetLocationalChildren() []asset.LocationalNode {
 
 type ChargingSession struct {
 	Id                       string      `json:"id"`
-	SessionStart             time.Time   `json:"session_start"`
-	SessionEnd               time.Time   `json:"session_end"`
+	SessionStart             *time.Time  `json:"session_start"`
+	SessionEnd               *time.Time  `json:"session_end"`
 	Duration                 int         `json:"duration"`
 	MeterStart               int         `json:"meter_start"`
 	MeterEnd                 int         `json:"meter_end"`

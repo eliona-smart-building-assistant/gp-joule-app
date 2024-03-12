@@ -17,6 +17,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -72,6 +73,7 @@ func collectData() {
 	}
 
 	for _, config := range configs {
+
 		if !conf.IsConfigEnabled(config) {
 			if conf.IsConfigActive(config) {
 				_, _ = conf.SetConfigActiveState(context.Background(), config, false)
@@ -95,14 +97,14 @@ func collectData() {
 
 		common.RunOnceWithParam(func(config apiserver.Configuration) {
 
-			log.Info("main", "Collecting %d started.", *config.Id)
+			log.Info("main", "Collecting for config %d started.", *config.Id)
 			if err := collectResources(&config); err != nil {
 				return // Error is handled in the method itself.
 			}
 			if err := sendSessions(&config); err != nil {
 				return // Error is handled in the method itself.
 			}
-			log.Info("main", "Collecting %d finished.", *config.Id)
+			log.Info("main", "Collecting for config %d finished.", *config.Id)
 
 			time.Sleep(time.Second * time.Duration(config.RefreshInterval))
 		}, config, *config.Id)
@@ -128,6 +130,8 @@ func collectResources(config *apiserver.Configuration) error {
 	// Create asset tree for each project id
 	for _, projectId := range *config.ProjectIDs {
 
+		log.Debug("eliona", "Start creating assets for config %d", *config.Id)
+
 		// Create asset tree
 		root := model.Root{
 			Config:   config,
@@ -135,21 +139,36 @@ func collectResources(config *apiserver.Configuration) error {
 		}
 
 		// create assets
-		assets, err := asset.CreateAssetsAndUpsertData(&root, projectId, nil, nil)
+		count, err := asset.CreateAssetsAndUpsertData(&root, projectId, nil, nil)
 		if err != nil {
-			log.Error("eliona", "Error creating assets: %v", err)
+			log.Error("eliona", "Error creating assets for config %d: %v", *config.Id, err)
 			return err
 		}
 
-		log.Trace("eliona", "Assets created: %v", assets)
+		log.Debug("eliona", "%d assets created for config %s", count, *config.Id)
+
+		// send notification
+		if count > 0 {
+			err = eliona.NotifyUser(config.UserId, projectId, &api.Translation{
+				De: api.PtrString(fmt.Sprintf("GP Joule App hat %d neue Assets angelegt. Diese sind nun im Asset-Management verfügbar.", count)),
+				En: api.PtrString(fmt.Sprintf("GP Joule app added %v new assets. They are now available in Asset Management.", count)),
+			})
+			if err != nil {
+				log.Error("collect", "Error notifying users about asset creation: %v", err)
+			}
+		}
 	}
 
 	// init assets
+	log.Debug("eliona", "Start init assets for config %d", *config.Id)
+
 	err = eliona.InitAssets(config)
 	if err != nil {
 		log.Error("eliona", "Error creating assets: %v", err)
 		return err
 	}
+
+	log.Debug("eliona", "Finished init assets for config %d", *config.Id)
 
 	return nil
 }
@@ -158,13 +177,15 @@ func sendSessions(config *apiserver.Configuration) error {
 	dbAssets, err := appdb.Assets(
 		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
 		appdb.AssetWhere.InitVersion.LTE(1),
-		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_resent_sessions")),
+		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_completed_sessions")),
 	).AllG(context.Background())
-
 	if err != nil {
 		return err
 	}
+
+	log.Debug("eliona", "Start sending sessions for config %d", *config.Id)
 	for _, dbAsset := range dbAssets {
+		var count = 0
 
 		// check if asset still exists in Eliona
 		exists, err := asset.ExistAsset(dbAsset.AssetID.Int32)
@@ -189,14 +210,15 @@ func sendSessions(config *apiserver.Configuration) error {
 
 			if session.Status == "stopped" && session.MeterTotal > 0 {
 
+				// send new session as data to Eliona
 				err = asset.UpsertData(api.Data{
 					AssetId:   dbAsset.AssetID.Int32,
 					Subtype:   "input",
-					Timestamp: *api.NewNullableTime(&session.SessionEnd),
+					Timestamp: *api.NewNullableTime(session.SessionEnd),
 					Data: map[string]any{
-						"session_count":       1,
-						"session_power":       session.MeterTotal,
-						"session_total_power": session.MeterTotal,
+						"count":    1,
+						"energy":   session.MeterTotal,
+						"duration": session.Duration,
 					},
 				})
 				if err != nil {
@@ -204,16 +226,22 @@ func sendSessions(config *apiserver.Configuration) error {
 					return err
 				}
 
-			}
+				// remember latest timestamp
+				dbAsset.LatestSessionTS = *session.SessionEnd
+				_, err = dbAsset.UpdateG(context.Background(), boil.Whitelist(appdb.AssetColumns.LatestSessionTS))
+				if err != nil {
+					log.Error("api", "Error updating asset latest session timestamp: %v", err)
+					return err
+				}
 
-			dbAsset.LatestSessionTS = session.SessionEnd
-			_, err = dbAsset.UpdateG(context.Background(), boil.Whitelist(appdb.AssetColumns.LatestSessionTS))
-			if err != nil {
-				log.Error("api", "Error updating asset latest session timestamp: %v", err)
-				return err
+				count++
 			}
 		}
+		log.Debug("eliona", "Finished sending %d sessions for asset %d for config %d", count, dbAsset.AssetID.Int32, *config.Id)
 	}
+
+	log.Debug("eliona", "Finished sending sessions for config %d", *config.Id)
+
 	return nil
 }
 
