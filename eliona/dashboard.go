@@ -65,7 +65,7 @@ func GpJouleDashboard(projectId string) (api.Dashboard, error) {
 			if dbSessionsLogAsset != nil && dbChargePointAsset != nil {
 
 				widget := api.Widget{
-					WidgetTypeName: "gp_joule_value_map",
+					WidgetTypeName: "gp_joule_connector",
 					AssetId:        *api.NewNullableInt32(common.Ptr(dbConnectorAsset.AssetID.Int32)),
 					Sequence:       *api.NewNullableInt32(common.Ptr(int32(0))),
 					Data: []api.WidgetData{

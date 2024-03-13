@@ -1,9 +1,9 @@
 {
-	"name": "gp_joule_value_map",
+	"name": "gp_joule_connector",
 	"custom": true,
 	"translation": {
-		"de": "GP Joule",
-		"en": "GP Joule"
+		"de": "GP Joule Konnektor",
+		"en": "GP Joule Connector"
 	},
 	"icon": "battery-voltage",
 	"withAlarm": true,
