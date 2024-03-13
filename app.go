@@ -205,7 +205,7 @@ func sendSessions(config *apiserver.Configuration) error {
 			}
 
 			// Get sessions asset for this
-			dbSessionsLogAsset, err := conf.GetSessionsLog(context.Background(), config, dbConnectorAsset.ProviderID)
+			dbSessionsLogAsset, err := conf.GetSessionsLog(context.Background(), dbConnectorAsset.ProviderID)
 			if err != nil {
 				log.Error("eliona", "Error getting sessions log : %v", err)
 				return err
@@ -296,7 +296,7 @@ func sendErrors(config *apiserver.Configuration) error {
 						Timestamp: *api.NewNullableTime(errorNotification.ResolvedAt),
 						Data: map[string]any{
 							"error":         0,
-							"error_message": fmt.Sprintf("%s: %s (%s)", errorNotification.ErrorCode, errorNotification.ErrorInfo, errorNotification.Id),
+							"error_message": "-",
 						},
 					})
 					if err != nil {

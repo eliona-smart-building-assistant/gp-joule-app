@@ -87,7 +87,7 @@ func initAssetV1(dbAsset *appdb.Asset) error {
 			Subtype:             "status",
 			Attribute:           "error",
 			Enable:              common.Ptr(true),
-			Priority:            3,
+			Priority:            2,
 			RequiresAcknowledge: common.Ptr(false),
 			High:                *api.NewNullableFloat64(common.Ptr(1.0)),
 			Message: map[string]interface{}{

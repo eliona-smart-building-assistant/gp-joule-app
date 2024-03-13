@@ -217,12 +217,33 @@ func GetConnectors(ctx context.Context, config *apiserver.Configuration) (appdb.
 	).AllG(ctx)
 }
 
-func GetSessionsLog(ctx context.Context, config *apiserver.Configuration, chargePointId string) (*appdb.Asset, error) {
+func GetConnectorsPerProject(ctx context.Context, projectId string) (appdb.AssetSlice, error) {
+	return appdb.Assets(
+		appdb.AssetWhere.ProjectID.EQ(projectId),
+		appdb.AssetWhere.InitVersion.GTE(1),
+		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_connector")),
+	).AllG(ctx)
+}
+
+func GetSessionsLog(ctx context.Context, chargePointId string) (*appdb.Asset, error) {
 	assets, err := appdb.Assets(
-		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
 		appdb.AssetWhere.InitVersion.GTE(0),
 		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_session_log")),
 		appdb.AssetWhere.ParentProviderID.EQ(chargePointId),
+	).AllG(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(assets) == 0 {
+		return nil, nil
+	}
+	return assets[0], nil
+}
+func GetChargePoint(ctx context.Context, chargePointId string) (*appdb.Asset, error) {
+	assets, err := appdb.Assets(
+		appdb.AssetWhere.InitVersion.GTE(0),
+		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_charge_point")),
+		appdb.AssetWhere.ProviderID.EQ(chargePointId),
 	).AllG(ctx)
 	if err != nil {
 		return nil, err

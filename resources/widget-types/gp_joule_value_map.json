@@ -1,0 +1,44 @@
+{
+	"name": "gp_joule_value_map",
+	"custom": true,
+	"translation": {
+		"de": "GP Joule",
+		"en": "GP Joule"
+	},
+	"icon": "battery-voltage",
+	"withAlarm": true,
+	"withTimespan": true,
+	"elements": [
+		{
+			"category": "value",
+			"sequence": 1,
+			"config": {
+				"description": "",
+				"variant": "tiles"
+			}
+		},
+		{
+			"category": "value",
+			"sequence": 2,
+			"config": {
+				"description": "",
+				"variant": "small"
+			}
+		},
+		{
+			"category": "trend",
+			"sequence": 3,
+			"config": {
+				"barValues": [],
+				"description": "",
+				"guideline": "",
+				"multipleYAxes": false,
+				"overlap": true,
+				"showCurrent": true,
+				"type": "analog",
+				"variant": "line",
+				"yAxisLabels": ""
+			}
+		}
+	]
+}
