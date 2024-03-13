@@ -345,7 +345,7 @@ type ChargingSession struct {
 type ErrorNotification struct {
 	Id            string     `json:"id"`
 	ChargePointId string     `json:"chargepoint_id"`
-	ConnectorUuid string     `json:"connector_uuid"`
+	ConnectorId   *string    `json:"connector_uuid"`
 	ErrorCode     string     `json:"error_code"`
 	ErrorInfo     string     `json:"error_info"`
 	VendorCode    string     `json:"vendor_code"`

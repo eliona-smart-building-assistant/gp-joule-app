@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gp-joule/apiserver"
 	"gp-joule/apiservices"
@@ -105,9 +104,9 @@ func collectData() {
 			if err := sendSessions(&config); err != nil {
 				return // ErrorNotification is handled in the method itself.
 			}
-			//if err := sendErrors(&config); err != nil {
-			//	return // ErrorNotification is handled in the method itself.
-			//}
+			if err := sendErrors(&config); err != nil {
+				return // ErrorNotification is handled in the method itself.
+			}
 			log.Info("main", "Collecting for config %d finished.", *config.Id)
 
 			time.Sleep(time.Second * time.Duration(config.RefreshInterval))
@@ -255,73 +254,105 @@ func sendSessions(config *apiserver.Configuration) error {
 }
 
 func sendErrors(config *apiserver.Configuration) error {
-	dbAssets, err := appdb.Assets(
-		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
-		appdb.AssetWhere.InitVersion.LTE(1),
-		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_connector")),
-	).AllG(context.Background())
+
+	dbConnectorAssets, err := conf.GetConnectors(context.Background(), config)
 	if err != nil {
+		log.Error("eliona", "Error getting connectors: %v", err)
 		return err
 	}
 
 	log.Debug("eliona", "Start sending errors for config %d", *config.Id)
-	for _, dbAsset := range dbAssets {
-		var count = 0
+	for _, dbConnectorAsset := range dbConnectorAssets {
+		var openCount = 0
+		var resolvedCount = 0
 
 		// check if asset still exists in Eliona
-		exists, err := asset.ExistAsset(dbAsset.AssetID.Int32)
+		exists, err := asset.ExistAsset(dbConnectorAsset.AssetID.Int32)
 		if err != nil {
-			log.Error("api", "ErrorNotification during checking if asset exists in Eliona: %v", err)
+			log.Error("eliona", "Error checking asset exists: %v", err)
 			return err
 		}
-		if !exists {
-			return nil
-		}
 
-		// get all sessions
-		sessions, err := gp_joule.GetCompletedSessions(config, dbAsset)
-		if err != nil {
-			log.Error("api", "ErrorNotification collecting sessions: %v", err)
-			return err
-		}
-		log.Trace("api", "Clusters: %v", sessions)
+		if exists {
 
-		// send sessions to Eliona
-		for _, session := range sessions {
-
-			if session.Status == "stopped" && session.MeterTotal > 0 {
-
-				// send new session as data to Eliona
-				err = asset.UpsertData(api.Data{
-					AssetId:   dbAsset.AssetID.Int32,
-					Subtype:   "input",
-					Timestamp: *api.NewNullableTime(session.SessionEnd),
-					Data: map[string]any{
-						"count":    1,
-						"energy":   session.MeterTotal,
-						"duration": session.Duration,
-					},
-				})
-				if err != nil {
-					log.Error("api", "ErrorNotification upserting data in Eliona: %v", err)
-					return err
-				}
-
-				// remember latest timestamp
-				dbAsset.LatestSessionTS = *session.SessionEnd
-				_, err = dbAsset.UpdateG(context.Background(), boil.Whitelist(appdb.AssetColumns.LatestSessionTS))
-				if err != nil {
-					log.Error("api", "ErrorNotification updating asset latest session timestamp: %v", err)
-					return err
-				}
-
-				count++
+			// get all open errors
+			errorNotifications, err := gp_joule.GetErrorNotifications(config, dbConnectorAsset)
+			if err != nil {
+				log.Error("api", "Error collecting error notifications: %v", err)
+				return err
 			}
+
+			// send all new resolved errors
+			for _, errorNotification := range errorNotifications {
+
+				// Close all errors that are resolved until an open error is found
+				if errorNotification.ResolvedAt != nil {
+					resolvedCount++
+
+					// reset resoled error as data to Eliona
+					err = asset.UpsertData(api.Data{
+						AssetId:   dbConnectorAsset.AssetID.Int32,
+						Subtype:   "status",
+						Timestamp: *api.NewNullableTime(errorNotification.ResolvedAt),
+						Data: map[string]any{
+							"error":         0,
+							"error_message": fmt.Sprintf("%s: %s (%s)", errorNotification.ErrorCode, errorNotification.ErrorInfo, errorNotification.Id),
+						},
+					})
+					if err != nil {
+						log.Error("api", "Error upserting data in Eliona: %v", err)
+						return err
+					}
+					// remember latest timestamp
+					dbConnectorAsset.LatestErrorTS = *errorNotification.OccurredAt
+					_, err = dbConnectorAsset.UpdateG(context.Background(), boil.Whitelist(appdb.AssetColumns.LatestErrorTS))
+					if err != nil {
+						log.Error("api", "ErrorNotification updating asset latest session timestamp: %v", err)
+						return err
+					}
+
+				}
+			}
+
+			// get all open errors
+			errorNotifications, err = gp_joule.GetErrorNotifications(config, dbConnectorAsset)
+			if err != nil {
+				log.Error("api", "Error collecting error notifications: %v", err)
+				return err
+			}
+
+			// send all open errors
+			for _, errorNotification := range errorNotifications {
+
+				// Send open errors to Eliona
+				if errorNotification.ResolvedAt == nil {
+					openCount++
+
+					// send new error as data to Eliona
+					err = asset.UpsertData(api.Data{
+						AssetId:   dbConnectorAsset.AssetID.Int32,
+						Subtype:   "status",
+						Timestamp: *api.NewNullableTime(errorNotification.OccurredAt),
+						Data: map[string]any{
+							"error":         openCount,
+							"error_message": fmt.Sprintf("%s: %s (%s)", errorNotification.ErrorCode, errorNotification.ErrorInfo, errorNotification.Id),
+						},
+					})
+					if err != nil {
+						log.Error("api", "Error upserting data in Eliona: %v", err)
+						return err
+					}
+
+				}
+			}
+
 		}
-		log.Debug("eliona", "Finished sending %d sessions for asset %d for config %d", count, dbAsset.AssetID.Int32, *config.Id)
+
+		log.Debug("eliona", "Finished opening %d new errors for asset %d for config %d", openCount, dbConnectorAsset.AssetID.Int32, *config.Id)
+		log.Debug("eliona", "Finished closing %d resolved errors for asset %d for config %d", resolvedCount, dbConnectorAsset.AssetID.Int32, *config.Id)
 	}
 
-	log.Debug("eliona", "Finished sending sessions for config %d", *config.Id)
+	log.Debug("eliona", "Finished sending errors for config %d", *config.Id)
 
 	return nil
 }

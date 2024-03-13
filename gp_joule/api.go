@@ -77,11 +77,11 @@ func GetCompletedSessions(config *apiserver.Configuration, dbConnectorAsset *app
 	return completedSessions, nil
 }
 
-func GetErrorNotifications(config *apiserver.Configuration, dbAsset *appdb.Asset) ([]*model.ErrorNotification, error) {
+func GetErrorNotifications(config *apiserver.Configuration, dbConnectorAsset *appdb.Asset) ([]*model.ErrorNotification, error) {
 
 	// create request
 	isoFormat := "2006-01-02T15:04:05Z"
-	fullUrl := fmt.Sprintf("%s/error-notifications?from=%s&to=%s", config.RootUrl, dbAsset.LatestSessionTS.Format(isoFormat), time.Now().Format(isoFormat))
+	fullUrl := fmt.Sprintf("%s/error-notifications?from=%s&to=%s&chargepoint_id=%s", config.RootUrl, dbConnectorAsset.LatestErrorTS.Format(isoFormat), time.Now().Format(isoFormat), dbConnectorAsset.ParentProviderID)
 	request, err := request(config, fullUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting %s: %w", fullUrl, err)
@@ -93,10 +93,10 @@ func GetErrorNotifications(config *apiserver.Configuration, dbAsset *appdb.Asset
 		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
 	}
 
-	// filtering out sessions with nil SessionEnd
+	// filtering out errors
 	var filteredNotifications []*model.ErrorNotification
 	for _, notification := range notifications {
-		if notification.ConnectorUuid == dbAsset.ProviderID && notification.OccurredAt != nil {
+		if (notification.ConnectorId == nil || *notification.ConnectorId == dbConnectorAsset.ProviderID) && notification.OccurredAt != nil && notification.OccurredAt.After(dbConnectorAsset.LatestErrorTS) {
 			filteredNotifications = append(filteredNotifications, notification)
 		}
 	}
