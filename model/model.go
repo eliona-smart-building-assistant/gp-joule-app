@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"gp-joule/apiserver"
 	"gp-joule/conf"
-	"strings"
+	"math"
 	"time"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
@@ -33,6 +33,7 @@ import (
 type Root struct {
 	Clusters []*Cluster
 
+	// own attributes
 	Config *apiserver.Configuration
 }
 
@@ -61,7 +62,7 @@ func (r *Root) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (r *Root) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), r.Config, projectID, r.GetGAI(), assetID, r.GetAssetType(), ""); err != nil {
+	if err := conf.InsertAsset(context.Background(), r.Config, projectID, r.GetGAI(), assetID, r.GetAssetType(), "", ""); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
@@ -86,6 +87,7 @@ type Cluster struct {
 	Name         string         `json:"name" eliona:"name,filterable"`
 	ChargePoints []*ChargePoint `json:"chargepoints"`
 
+	// own attributes
 	Config *apiserver.Configuration
 }
 
@@ -114,7 +116,7 @@ func (c *Cluster) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (c *Cluster) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.GetAssetType(), c.Name); err != nil {
+	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.GetAssetType(), "", c.Name); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
@@ -123,6 +125,7 @@ func (c *Cluster) SetAssetID(assetID int32, projectID string) error {
 func (c *Cluster) GetLocationalChildren() []asset.LocationalNode {
 	locationalChildren := make([]asset.LocationalNode, 0)
 	for _, chargingPoint := range c.ChargePoints {
+		chargingPoint.Cluster = c
 		chargingPoint.Config = c.Config
 		locationalChildren = append(locationalChildren, chargingPoint)
 	}
@@ -141,7 +144,7 @@ type ChargePoint struct {
 	ConnectorsTotal     int          `json:"connectors_total" eliona:"connectors_total" subtype:"info"`
 	ConnectorsFree      int          `json:"connectors_free"`
 	ConnectorsFaulted   int          `json:"connectors_faulted"`
-	ConnectorsOccupied  int          `json:"connectors_occupied" eliona:"connectors_occupied" subtype:"input"`
+	ConnectorsOccupied  int          `json:"connectors_occupied" eliona:"connectors_occupied" subtype:"status"`
 	Manufacturer        string       `json:"manufacturer" eliona:"manufacturer,filterable" subtype:"info"`
 	Model               string       `json:"model" eliona:"model,filterable" subtype:"info"`
 	Lat                 float64      `json:"lat"`
@@ -154,7 +157,9 @@ type ChargePoint struct {
 	Error               interface{}  `json:"error"`
 	Connectors          []*Connector `json:"connectors"`
 
-	Config *apiserver.Configuration
+	// own attributes
+	Cluster *Cluster
+	Config  *apiserver.Configuration
 }
 
 func (cp *ChargePoint) GetName() string {
@@ -182,7 +187,7 @@ func (cp *ChargePoint) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (cp *ChargePoint) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), cp.Config, projectID, cp.GetGAI(), assetID, cp.GetAssetType(), cp.ChargePointId); err != nil {
+	if err := conf.InsertAsset(context.Background(), cp.Config, projectID, cp.GetGAI(), assetID, cp.GetAssetType(), cp.Cluster.GetName(), cp.ChargePointId); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
@@ -192,95 +197,47 @@ func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 	locationalChildren := make([]asset.LocationalNode, 0)
 
 	// Add connectors
-	for _, connector := range cp.Connectors {
+	for idx, connector := range cp.Connectors {
+		connector.ChargePoint = cp
 		connector.Config = cp.Config
+		connector.Index = idx + 1
 		if connector.ChargingSession != nil {
 			connector.Duration = connector.ChargingSession.Duration
-			connector.MeterTotal = connector.ChargingSession.MeterTotal
-			connector.Occupied = -1
-			if connector.Status == "available" {
-				connector.Occupied = 0
-			} else if connector.Status == "occupied" {
-				connector.Occupied = 1
-			}
+			connector.MeterTotal = int(math.Max(float64(connector.ChargingSession.MeterTotal), 0))
+			connector.Occupied = mapOccupancyStatus(connector.Status)
 		}
 		locationalChildren = append(locationalChildren, connector)
 	}
 
-	// Add one sessions container
-	locationalChildren = append(locationalChildren, &ChargingSessions{
-		ChargePoint: cp,
-		Config:      cp.Config,
-	})
-
 	return locationalChildren
-}
-
-// SESSIONS
-
-type ChargingSessions struct {
-	ChargePoint *ChargePoint
-	Config      *apiserver.Configuration
-}
-
-func (s *ChargingSessions) GetName() string {
-	return fmt.Sprintf("%s sessions", s.ChargePoint.Name)
-}
-
-func (s *ChargingSessions) GetDescription() string {
-	return fmt.Sprintf("ChargingSessions for %s", s.ChargePoint.NameInternal)
-}
-
-func (s *ChargingSessions) GetAssetType() string {
-	return "gp_joule_completed_sessions"
-}
-
-func (s *ChargingSessions) GetGAI() string {
-	return s.GetAssetType() + "_" + s.ChargePoint.ChargePointId
-}
-
-func (s *ChargingSessions) AdheresToFilter(filter [][]apiserver.FilterRule) (bool, error) {
-	return adheresToFilter(s, filter)
-}
-
-func (s *ChargingSessions) GetAssetID(projectID string) (*int32, error) {
-	return conf.GetAssetId(context.Background(), s.Config, projectID, s.GetGAI())
-}
-
-func (s *ChargingSessions) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), s.Config, projectID, s.GetGAI(), assetID, s.GetAssetType(), s.ChargePoint.ChargePointId); err != nil {
-		return fmt.Errorf("inserting asset to Config db: %v", err)
-	}
-	return nil
-}
-
-func (s *ChargingSessions) GetLocationalChildren() []asset.LocationalNode {
-	return make([]asset.LocationalNode, 0)
 }
 
 // CONNECTOR
 
 type Connector struct {
-	Uuid            string           `json:"uuid"`
+	ConnectorId     string           `json:"uuid"`
 	EvseId          string           `json:"evseid"`
 	Status          string           `json:"status" eliona:"status" subtype:"status"`
 	MaxPower        int              `json:"max_power" eliona:"max_power" subtype:"info"`
 	ChargePointType string           `json:"chargepoint_type"`
 	PlugType        string           `json:"plug_type" eliona:"plug_type,filterable"`
-	MeterTotal      int              `eliona:"current_energy" subtype:"input"`
-	Duration        int              `eliona:"current_duration" subtype:"input"`
-	Occupied        int              `eliona:"occupied" subtype:"status"`
 	ChargingSession *ChargingSession `json:"charging_session"`
 
-	Config *apiserver.Configuration
+	// own attributes
+	ChargePoint *ChargePoint
+	Config      *apiserver.Configuration
+	MeterTotal  int `eliona:"current_energy" subtype:"input"`
+	Duration    int `eliona:"current_duration" subtype:"input"`
+	Occupied    int `eliona:"occupied" subtype:"status"`
+	Index       int
 }
 
 func (c *Connector) GetName() string {
-	return strings.Trim(c.PlugType+" "+c.ChargePointType, " ")
+	return fmt.Sprintf("%s %s %d", c.PlugType, c.ChargePointType, c.Index)
 }
 
 func (c *Connector) GetDescription() string {
-	return c.ChargePointType
+	return c.EvseId
 }
 
 func (c *Connector) GetAssetType() string {
@@ -288,7 +245,7 @@ func (c *Connector) GetAssetType() string {
 }
 
 func (c *Connector) GetGAI() string {
-	return c.GetAssetType() + "_" + c.Uuid
+	return c.GetAssetType() + "_" + c.ConnectorId
 }
 
 func (c *Connector) AdheresToFilter(filter [][]apiserver.FilterRule) (bool, error) {
@@ -300,13 +257,63 @@ func (c *Connector) GetAssetID(projectID string) (*int32, error) {
 }
 
 func (c *Connector) SetAssetID(assetID int32, projectID string) error {
-	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.GetAssetType(), c.Uuid); err != nil {
+	if err := conf.InsertAsset(context.Background(), c.Config, projectID, c.GetGAI(), assetID, c.GetAssetType(), c.ChargePoint.ChargePointId, c.ConnectorId); err != nil {
 		return fmt.Errorf("inserting asset to Config db: %v", err)
 	}
 	return nil
 }
 
 func (c *Connector) GetLocationalChildren() []asset.LocationalNode {
+	locationalChildren := make([]asset.LocationalNode, 0)
+
+	// Add one sessions container
+	locationalChildren = append(locationalChildren, &SessionsLog{
+		Connector: c,
+		Config:    c.Config,
+	})
+
+	return locationalChildren
+}
+
+// COMPLETED SESSIONS
+
+type SessionsLog struct {
+	Connector *Connector
+	Config    *apiserver.Configuration
+}
+
+func (cs *SessionsLog) GetName() string {
+	return fmt.Sprintf("%s session log", cs.Connector.GetName())
+}
+
+func (cs *SessionsLog) GetDescription() string {
+	return fmt.Sprintf("Session log for %s", cs.Connector.GetName())
+}
+
+func (cs *SessionsLog) GetAssetType() string {
+	return "gp_joule_session_log"
+}
+
+func (cs *SessionsLog) GetGAI() string {
+	return cs.GetAssetType() + "_" + cs.Connector.ConnectorId
+}
+
+func (cs *SessionsLog) AdheresToFilter(filter [][]apiserver.FilterRule) (bool, error) {
+	return adheresToFilter(cs, filter)
+}
+
+func (cs *SessionsLog) GetAssetID(projectID string) (*int32, error) {
+	return conf.GetAssetId(context.Background(), cs.Config, projectID, cs.GetGAI())
+}
+
+func (cs *SessionsLog) SetAssetID(assetID int32, projectID string) error {
+	if err := conf.InsertAsset(context.Background(), cs.Config, projectID, cs.GetGAI(), assetID, cs.GetAssetType(), cs.Connector.ConnectorId, ""); err != nil {
+		return fmt.Errorf("inserting asset to Config db: %v", err)
+	}
+	return nil
+}
+
+func (cs *SessionsLog) GetLocationalChildren() []asset.LocationalNode {
 	return make([]asset.LocationalNode, 0)
 }
 
@@ -321,7 +328,7 @@ type ChargingSession struct {
 	MeterEnd                 int         `json:"meter_end"`
 	MeterTotal               int         `json:"meter_total"`
 	ChargePointId            string      `json:"chargepoint_id"`
-	ConnectorUuid            string      `json:"connector_uuid"`
+	ConnectorId              string      `json:"connector_uuid"`
 	ConnectorEvse            string      `json:"connector_evse"`
 	CostsNet                 float64     `json:"costs_net"`
 	TaxAmount                float64     `json:"tax_amount"`
@@ -333,7 +340,20 @@ type ChargingSession struct {
 	StateOfChargeLastChanged interface{} `json:"state_of_charge_last_changed"`
 }
 
-// DEFAULT
+// ERROR
+
+type ErrorNotification struct {
+	Id            string     `json:"id"`
+	ChargePointId string     `json:"chargepoint_id"`
+	ConnectorUuid string     `json:"connector_uuid"`
+	ErrorCode     string     `json:"error_code"`
+	ErrorInfo     string     `json:"error_info"`
+	VendorCode    string     `json:"vendor_code"`
+	OccurredAt    *time.Time `json:"occurred_at"`
+	ResolvedAt    *time.Time `json:"resolved_at"`
+}
+
+// HELPER
 
 func adheresToFilter[T any](data *T, filter [][]apiserver.FilterRule) (bool, error) {
 	f := apiFilterToCommonFilter(filter)
@@ -360,4 +380,14 @@ func apiFilterToCommonFilter(input [][]apiserver.FilterRule) [][]common.FilterRu
 		}
 	}
 	return result
+}
+
+func mapOccupancyStatus(status string) int {
+	if status == "available" {
+		return 0
+	}
+	if status == "occupied" {
+		return 1
+	}
+	return -1
 }

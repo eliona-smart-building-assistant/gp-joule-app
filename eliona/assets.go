@@ -21,6 +21,7 @@ import (
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"github.com/eliona-smart-building-assistant/go-eliona/client"
+	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gp-joule/apiserver"
@@ -77,13 +78,35 @@ func initAssetV1(dbAsset *appdb.Asset) error {
 		return nil
 	}
 
-	if dbAsset.AssetType.String == "gp_joule_charge_point" {
+	if dbAsset.AssetType.String == "gp_joule_connector" {
 
 		log.Debug("eliona", "Init version 1 of asset %d", dbAsset.AssetID.Int32)
 
-		// Set alarm rules
-		// ...
-
+		_, _, err := client.NewClient().AlarmRulesAPI.PostAlarmRule(client.AuthenticationContext()).AlarmRule(api.AlarmRule{
+			AssetId:             dbAsset.AssetID.Int32,
+			Subtype:             "status",
+			Attribute:           "error",
+			Enable:              common.Ptr(true),
+			Priority:            3,
+			RequiresAcknowledge: common.Ptr(false),
+			High:                *api.NewNullableFloat64(common.Ptr(1.0)),
+			Message: map[string]interface{}{
+				"come": map[string]interface{}{
+					"de": "{{asset.name}} ({{alarm.val}})",
+					"en": "{{asset.name}} ({{alarm.val}})",
+					"fr": "{{asset.name}} ({{alarm.val}})",
+					"it": "{{asset.name}} ({{alarm.val}})",
+				},
+			},
+			Subject:  api.NullableString{},
+			Urldoc:   api.NullableString{},
+			NotifyOn: *api.NewNullableString(common.Ptr("R")),
+			DontMask: *api.NewNullableBool(common.Ptr(false)),
+		}).Execute()
+		if err != nil {
+			return fmt.Errorf("error during send alarm rule for asset %d: %w", dbAsset.AssetID.Int32, err)
+		}
+		log.Debug("eliona", "Added alarm rule for asset %d", dbAsset.AssetID.Int32)
 	}
 
 	return nil
@@ -91,7 +114,7 @@ func initAssetV1(dbAsset *appdb.Asset) error {
 
 func NotifyUser(userId *string, projectId string, translation *api.Translation) error {
 	if userId != nil {
-		receipt, _, err := client.NewClient().CommunicationAPI.
+		_, _, err := client.NewClient().CommunicationAPI.
 			PostNotification(client.AuthenticationContext()).
 			Notification(
 				api.Notification{
@@ -100,7 +123,7 @@ func NotifyUser(userId *string, projectId string, translation *api.Translation) 
 					Message:   *api.NewNullableTranslation(translation),
 				}).
 			Execute()
-		log.Debug("eliona", "posted notification about CAC: %v", receipt)
+		log.Debug("eliona", "Posted notification about CAC")
 		if err != nil {
 			return fmt.Errorf("posting CAC notification: %v", err)
 		}

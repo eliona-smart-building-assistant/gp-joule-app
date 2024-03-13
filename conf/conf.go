@@ -185,12 +185,13 @@ func SetAllConfigsInactive(ctx context.Context) (int64, error) {
 	})
 }
 
-func InsertAsset(ctx context.Context, config *apiserver.Configuration, projId string, globalAssetID string, assetId int32, assetType string, providerId string) error {
+func InsertAsset(ctx context.Context, config *apiserver.Configuration, projId string, globalAssetID string, assetId int32, assetType string, parentProviderId string, providerId string) error {
 	var dbAsset appdb.Asset
 	dbAsset.ConfigurationID = null.Int64FromPtr(config.Id).Int64
 	dbAsset.ProjectID = projId
 	dbAsset.GlobalAssetID = globalAssetID
 	dbAsset.AssetID = null.Int32From(assetId)
+	dbAsset.ParentProviderID = parentProviderId
 	dbAsset.ProviderID = providerId
 	dbAsset.AssetType = null.StringFrom(assetType)
 	return dbAsset.InsertG(ctx, boil.Infer())
@@ -206,6 +207,30 @@ func GetAssetId(ctx context.Context, config *apiserver.Configuration, projId str
 		return nil, err
 	}
 	return common.Ptr(dbAsset[0].AssetID.Int32), nil
+}
+
+func GetConnectors(ctx context.Context, config *apiserver.Configuration) (appdb.AssetSlice, error) {
+	return appdb.Assets(
+		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
+		appdb.AssetWhere.InitVersion.GTE(1),
+		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_connector")),
+	).AllG(ctx)
+}
+
+func GetSessionsLog(ctx context.Context, config *apiserver.Configuration, chargePointId string) (*appdb.Asset, error) {
+	assets, err := appdb.Assets(
+		appdb.AssetWhere.ConfigurationID.EQ(*config.Id),
+		appdb.AssetWhere.InitVersion.GTE(0),
+		appdb.AssetWhere.AssetType.EQ(null.StringFrom("gp_joule_session_log")),
+		appdb.AssetWhere.ParentProviderID.EQ(chargePointId),
+	).AllG(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(assets) == 0 {
+		return nil, nil
+	}
+	return assets[0], nil
 }
 
 func GetAssetById(assetId int32) (appdb.Asset, error) {

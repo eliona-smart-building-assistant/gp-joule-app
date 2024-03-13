@@ -24,67 +24,72 @@ import (
 
 // Asset is an object representing the database table.
 type Asset struct {
-	ID              int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ConfigurationID int64       `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
-	ProjectID       string      `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
-	GlobalAssetID   string      `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
-	ProviderID      string      `boil:"provider_id" json:"provider_id" toml:"provider_id" yaml:"provider_id"`
-	AssetID         null.Int32  `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
-	AssetType       null.String `boil:"asset_type" json:"asset_type,omitempty" toml:"asset_type" yaml:"asset_type,omitempty"`
-	InitVersion     int32       `boil:"init_version" json:"init_version" toml:"init_version" yaml:"init_version"`
-	LatestSessionTS time.Time   `boil:"latest_session_ts" json:"latest_session_ts" toml:"latest_session_ts" yaml:"latest_session_ts"`
-	LatestErrorTS   time.Time   `boil:"latest_error_ts" json:"latest_error_ts" toml:"latest_error_ts" yaml:"latest_error_ts"`
+	ID               int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ConfigurationID  int64       `boil:"configuration_id" json:"configuration_id" toml:"configuration_id" yaml:"configuration_id"`
+	ProjectID        string      `boil:"project_id" json:"project_id" toml:"project_id" yaml:"project_id"`
+	GlobalAssetID    string      `boil:"global_asset_id" json:"global_asset_id" toml:"global_asset_id" yaml:"global_asset_id"`
+	ParentProviderID string      `boil:"parent_provider_id" json:"parent_provider_id" toml:"parent_provider_id" yaml:"parent_provider_id"`
+	ProviderID       string      `boil:"provider_id" json:"provider_id" toml:"provider_id" yaml:"provider_id"`
+	AssetID          null.Int32  `boil:"asset_id" json:"asset_id,omitempty" toml:"asset_id" yaml:"asset_id,omitempty"`
+	AssetType        null.String `boil:"asset_type" json:"asset_type,omitempty" toml:"asset_type" yaml:"asset_type,omitempty"`
+	InitVersion      int32       `boil:"init_version" json:"init_version" toml:"init_version" yaml:"init_version"`
+	LatestSessionTS  time.Time   `boil:"latest_session_ts" json:"latest_session_ts" toml:"latest_session_ts" yaml:"latest_session_ts"`
+	LatestErrorTS    time.Time   `boil:"latest_error_ts" json:"latest_error_ts" toml:"latest_error_ts" yaml:"latest_error_ts"`
 
 	R *assetR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L assetL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AssetColumns = struct {
-	ID              string
-	ConfigurationID string
-	ProjectID       string
-	GlobalAssetID   string
-	ProviderID      string
-	AssetID         string
-	AssetType       string
-	InitVersion     string
-	LatestSessionTS string
-	LatestErrorTS   string
+	ID               string
+	ConfigurationID  string
+	ProjectID        string
+	GlobalAssetID    string
+	ParentProviderID string
+	ProviderID       string
+	AssetID          string
+	AssetType        string
+	InitVersion      string
+	LatestSessionTS  string
+	LatestErrorTS    string
 }{
-	ID:              "id",
-	ConfigurationID: "configuration_id",
-	ProjectID:       "project_id",
-	GlobalAssetID:   "global_asset_id",
-	ProviderID:      "provider_id",
-	AssetID:         "asset_id",
-	AssetType:       "asset_type",
-	InitVersion:     "init_version",
-	LatestSessionTS: "latest_session_ts",
-	LatestErrorTS:   "latest_error_ts",
+	ID:               "id",
+	ConfigurationID:  "configuration_id",
+	ProjectID:        "project_id",
+	GlobalAssetID:    "global_asset_id",
+	ParentProviderID: "parent_provider_id",
+	ProviderID:       "provider_id",
+	AssetID:          "asset_id",
+	AssetType:        "asset_type",
+	InitVersion:      "init_version",
+	LatestSessionTS:  "latest_session_ts",
+	LatestErrorTS:    "latest_error_ts",
 }
 
 var AssetTableColumns = struct {
-	ID              string
-	ConfigurationID string
-	ProjectID       string
-	GlobalAssetID   string
-	ProviderID      string
-	AssetID         string
-	AssetType       string
-	InitVersion     string
-	LatestSessionTS string
-	LatestErrorTS   string
+	ID               string
+	ConfigurationID  string
+	ProjectID        string
+	GlobalAssetID    string
+	ParentProviderID string
+	ProviderID       string
+	AssetID          string
+	AssetType        string
+	InitVersion      string
+	LatestSessionTS  string
+	LatestErrorTS    string
 }{
-	ID:              "asset.id",
-	ConfigurationID: "asset.configuration_id",
-	ProjectID:       "asset.project_id",
-	GlobalAssetID:   "asset.global_asset_id",
-	ProviderID:      "asset.provider_id",
-	AssetID:         "asset.asset_id",
-	AssetType:       "asset.asset_type",
-	InitVersion:     "asset.init_version",
-	LatestSessionTS: "asset.latest_session_ts",
-	LatestErrorTS:   "asset.latest_error_ts",
+	ID:               "asset.id",
+	ConfigurationID:  "asset.configuration_id",
+	ProjectID:        "asset.project_id",
+	GlobalAssetID:    "asset.global_asset_id",
+	ParentProviderID: "asset.parent_provider_id",
+	ProviderID:       "asset.provider_id",
+	AssetID:          "asset.asset_id",
+	AssetType:        "asset.asset_type",
+	InitVersion:      "asset.init_version",
+	LatestSessionTS:  "asset.latest_session_ts",
+	LatestErrorTS:    "asset.latest_error_ts",
 }
 
 // Generated where
@@ -272,27 +277,29 @@ func (w whereHelpertime_Time) GTE(x time.Time) qm.QueryMod {
 }
 
 var AssetWhere = struct {
-	ID              whereHelperint64
-	ConfigurationID whereHelperint64
-	ProjectID       whereHelperstring
-	GlobalAssetID   whereHelperstring
-	ProviderID      whereHelperstring
-	AssetID         whereHelpernull_Int32
-	AssetType       whereHelpernull_String
-	InitVersion     whereHelperint32
-	LatestSessionTS whereHelpertime_Time
-	LatestErrorTS   whereHelpertime_Time
+	ID               whereHelperint64
+	ConfigurationID  whereHelperint64
+	ProjectID        whereHelperstring
+	GlobalAssetID    whereHelperstring
+	ParentProviderID whereHelperstring
+	ProviderID       whereHelperstring
+	AssetID          whereHelpernull_Int32
+	AssetType        whereHelpernull_String
+	InitVersion      whereHelperint32
+	LatestSessionTS  whereHelpertime_Time
+	LatestErrorTS    whereHelpertime_Time
 }{
-	ID:              whereHelperint64{field: "\"gp_joule\".\"asset\".\"id\""},
-	ConfigurationID: whereHelperint64{field: "\"gp_joule\".\"asset\".\"configuration_id\""},
-	ProjectID:       whereHelperstring{field: "\"gp_joule\".\"asset\".\"project_id\""},
-	GlobalAssetID:   whereHelperstring{field: "\"gp_joule\".\"asset\".\"global_asset_id\""},
-	ProviderID:      whereHelperstring{field: "\"gp_joule\".\"asset\".\"provider_id\""},
-	AssetID:         whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"asset_id\""},
-	AssetType:       whereHelpernull_String{field: "\"gp_joule\".\"asset\".\"asset_type\""},
-	InitVersion:     whereHelperint32{field: "\"gp_joule\".\"asset\".\"init_version\""},
-	LatestSessionTS: whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
-	LatestErrorTS:   whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_error_ts\""},
+	ID:               whereHelperint64{field: "\"gp_joule\".\"asset\".\"id\""},
+	ConfigurationID:  whereHelperint64{field: "\"gp_joule\".\"asset\".\"configuration_id\""},
+	ProjectID:        whereHelperstring{field: "\"gp_joule\".\"asset\".\"project_id\""},
+	GlobalAssetID:    whereHelperstring{field: "\"gp_joule\".\"asset\".\"global_asset_id\""},
+	ParentProviderID: whereHelperstring{field: "\"gp_joule\".\"asset\".\"parent_provider_id\""},
+	ProviderID:       whereHelperstring{field: "\"gp_joule\".\"asset\".\"provider_id\""},
+	AssetID:          whereHelpernull_Int32{field: "\"gp_joule\".\"asset\".\"asset_id\""},
+	AssetType:        whereHelpernull_String{field: "\"gp_joule\".\"asset\".\"asset_type\""},
+	InitVersion:      whereHelperint32{field: "\"gp_joule\".\"asset\".\"init_version\""},
+	LatestSessionTS:  whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_session_ts\""},
+	LatestErrorTS:    whereHelpertime_Time{field: "\"gp_joule\".\"asset\".\"latest_error_ts\""},
 }
 
 // AssetRels is where relationship names are stored.
@@ -323,8 +330,8 @@ func (r *assetR) GetConfiguration() *Configuration {
 type assetL struct{}
 
 var (
-	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "provider_id", "asset_id", "asset_type", "init_version", "latest_session_ts", "latest_error_ts"}
-	assetColumnsWithoutDefault = []string{"project_id", "global_asset_id", "provider_id"}
+	assetAllColumns            = []string{"id", "configuration_id", "project_id", "global_asset_id", "parent_provider_id", "provider_id", "asset_id", "asset_type", "init_version", "latest_session_ts", "latest_error_ts"}
+	assetColumnsWithoutDefault = []string{"project_id", "global_asset_id", "parent_provider_id", "provider_id"}
 	assetColumnsWithDefault    = []string{"id", "configuration_id", "asset_id", "asset_type", "init_version", "latest_session_ts", "latest_error_ts"}
 	assetPrimaryKeyColumns     = []string{"id"}
 	assetGeneratedColumns      = []string{}

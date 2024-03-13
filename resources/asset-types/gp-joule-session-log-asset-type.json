@@ -1,6 +1,6 @@
 {
 	"custom": false,
-	"name": "gp_joule_completed_sessions",
+	"name": "gp_joule_session_log",
 	"translation": {
 		"de": "GP Joule Vorgänge",
 		"en": "GP Joule sessions"

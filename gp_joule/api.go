@@ -45,36 +45,68 @@ func GetClusters(config *apiserver.Configuration) ([]*model.Cluster, error) {
 	return clusters, nil
 }
 
-func GetSessions(config *apiserver.Configuration, dbAsset *appdb.Asset) ([]*model.ChargingSession, error) {
+func GetCompletedSessions(config *apiserver.Configuration, dbConnectorAsset *appdb.Asset) ([]*model.ChargingSession, error) {
 
 	// create request
 	isoFormat := "2006-01-02T15:04:05Z"
-	fullUrl := fmt.Sprintf("%s/chargelogs?from=%s&to=%s&chargepoint_id=%s", config.RootUrl, dbAsset.LatestSessionTS.Format(isoFormat), time.Now().Format(isoFormat), dbAsset.ProviderID)
+	fullUrl := fmt.Sprintf("%s/chargelogs?from=%s&to=%s&chargepoint_id=%s", config.RootUrl, dbConnectorAsset.LatestSessionTS.Format(isoFormat), time.Now().Format(isoFormat), dbConnectorAsset.ParentProviderID)
 	request, err := request(config, fullUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error requesting %s: %w", fullUrl, err)
 	}
 
-	// read clusters
+	// read sessions
 	sessions, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.ChargingSession](request, time.Duration(*config.RequestTimeout)*time.Second, true)
 	if err != nil || statusCode != http.StatusOK {
 		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
 	}
 
-	// filtering out sessions with nil SessionEnd
-	var filteredSessions []*model.ChargingSession
+	// filtering out sessions all completed sessions belongs to connector
+	var completedSessions []*model.ChargingSession
 	for _, session := range sessions {
-		if session.SessionEnd != nil {
-			filteredSessions = append(filteredSessions, session)
+		if session.ConnectorId == dbConnectorAsset.ProviderID && session.MeterTotal > 0 && session.Status == "stopped" && session.SessionStart != nil && session.SessionEnd != nil {
+			completedSessions = append(completedSessions, session)
 		}
 	}
 
 	// sort ascending by end date
-	sort.Slice(filteredSessions, func(i, j int) bool {
-		return filteredSessions[i].SessionEnd.Before(*filteredSessions[j].SessionEnd)
+	sort.Slice(completedSessions, func(i, j int) bool {
+		return completedSessions[i].SessionStart.Before(*completedSessions[j].SessionStart)
 	})
 
-	return filteredSessions, nil
+	return completedSessions, nil
+}
+
+func GetErrorNotifications(config *apiserver.Configuration, dbAsset *appdb.Asset) ([]*model.ErrorNotification, error) {
+
+	// create request
+	isoFormat := "2006-01-02T15:04:05Z"
+	fullUrl := fmt.Sprintf("%s/error-notifications?from=%s&to=%s", config.RootUrl, dbAsset.LatestSessionTS.Format(isoFormat), time.Now().Format(isoFormat))
+	request, err := request(config, fullUrl)
+	if err != nil {
+		return nil, fmt.Errorf("error requesting %s: %w", fullUrl, err)
+	}
+
+	// read error notifications
+	notifications, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.ErrorNotification](request, time.Duration(*config.RequestTimeout)*time.Second, true)
+	if err != nil || statusCode != http.StatusOK {
+		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
+	}
+
+	// filtering out sessions with nil SessionEnd
+	var filteredNotifications []*model.ErrorNotification
+	for _, notification := range notifications {
+		if notification.ConnectorUuid == dbAsset.ProviderID && notification.OccurredAt != nil {
+			filteredNotifications = append(filteredNotifications, notification)
+		}
+	}
+
+	// sort ascending by occurred date
+	sort.Slice(filteredNotifications, func(i, j int) bool {
+		return filteredNotifications[i].OccurredAt.Before(*filteredNotifications[j].OccurredAt)
+	})
+
+	return filteredNotifications, nil
 }
 
 func request(config *apiserver.Configuration, fullUrl string) (*http.Request, error) {
