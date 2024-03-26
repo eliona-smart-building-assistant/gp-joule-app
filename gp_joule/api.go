@@ -48,7 +48,7 @@ func GetClusters(config *apiserver.Configuration) ([]*model.Cluster, error) {
 func GetCompletedSessions(config *apiserver.Configuration, dbConnectorAsset *appdb.Asset) ([]*model.ChargingSession, error) {
 
 	// create request
-	isoFormat := "2006-01-02T15:04:05Z"
+	isoFormat := "2006-01-02T15:04:05Z" // API does only recognize UTC and returns only UTC
 	fullUrl := fmt.Sprintf("%s/chargelogs?from=%s&to=%s&chargepoint_id=%s", config.RootUrl, dbConnectorAsset.LatestSessionTS.Format(isoFormat), time.Now().Format(isoFormat), dbConnectorAsset.ParentProviderID)
 	request, err := request(config, fullUrl)
 	if err != nil {
@@ -80,7 +80,7 @@ func GetCompletedSessions(config *apiserver.Configuration, dbConnectorAsset *app
 func GetErrorNotifications(config *apiserver.Configuration, dbConnectorAsset *appdb.Asset) ([]*model.ErrorNotification, error) {
 
 	// create request
-	isoFormat := "2006-01-02T15:04:05Z"
+	isoFormat := "2006-01-02T15:04:05Z" // API does only recognize UTC and returns only UTC
 	fullUrl := fmt.Sprintf("%s/error-notifications?from=%s&to=%s&chargepoint_id=%s", config.RootUrl, dbConnectorAsset.LatestErrorTS.Format(isoFormat), time.Now().Format(isoFormat), dbConnectorAsset.ParentProviderID)
 	request, err := request(config, fullUrl)
 	if err != nil {
