@@ -19,8 +19,8 @@ create schema if not exists gp_joule;
 create table if not exists gp_joule.configuration
 (
 	id                   bigserial primary key,
-    root_url             text not null,
-    api_key              text not null,
+	root_url             text not null,
+	api_key              text not null,
 	refresh_interval     integer not null default 60,
 	request_timeout      integer not null default 120,
 	asset_filter         json,
@@ -36,13 +36,13 @@ create table if not exists gp_joule.asset
 	configuration_id    bigserial not null references gp_joule.configuration(id) ON DELETE CASCADE,
 	project_id          text      not null,
 	global_asset_id     text      not null,
-    parent_provider_id  text      not null,
-    provider_id         text      not null,
+	parent_provider_id  text      not null,
+	provider_id         text      not null,
 	asset_id            integer,
-    asset_type          text,
-    init_version        integer   not null default 0,
-    latest_session_ts   timestamp with time zone not null default '1900-01-01 00:00:00',
-    latest_error_ts     timestamp with time zone not null default '1900-01-01 00:00:00'
+	asset_type          text,
+	init_version        integer   not null default 0,
+	latest_session_ts   timestamp with time zone not null default '1900-01-01 00:00:00',
+	latest_error_ts     timestamp with time zone not null default '1900-01-01 00:00:00'
 );
 
 -- Makes the new objects available for all other init steps
