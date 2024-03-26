@@ -9,7 +9,6 @@ require (
 	github.com/eliona-smart-building-assistant/go-utils v1.1.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.1
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.16.2
 	github.com/volatiletech/strmangle v0.0.6
@@ -25,6 +24,7 @@ require (
 	github.com/ericlagergren/decimal v0.0.0-20221120152707-495c53812d05 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.3 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
