@@ -18,8 +18,6 @@ package main
 import (
 	"context"
 	"fmt"
-	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gp-joule/apiserver"
 	"gp-joule/apiservices"
 	"gp-joule/appdb"
@@ -31,6 +29,9 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/app"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
@@ -222,7 +223,7 @@ func sendSessions(config *apiserver.Configuration) error {
 						Subtype:   "input",
 						Timestamp: *api.NewNullableTime(completedSession.SessionEnd),
 						Data: map[string]any{
-							"count":    1,
+							"count":    1, // Helper attribute to calculate number of charging sessions in Eliona.
 							"energy":   int(math.Max(float64(completedSession.MeterTotal), 0)),
 							"duration": completedSession.Duration,
 						},
