@@ -50,6 +50,21 @@ The app provides its own API to access configuration data and other functions. T
 
 **Generation**: to generate api server stub see Generation section below.
 
+### Configuring the app ###
+
+To use the app it is necessary to create at least one configuration. A configuration points to one GP-Joule API.
+Also, a configuration defines at least one Eliona project ID for automatic asset creation.
+
+A minimum configuration that can used by the app's API endpoint `POST /configs` is:
+
+```json
+{
+    "rootUrl": "https://api.joule.net/example/url",
+    "apiKey": "secret",
+    "enable": true,
+    "projectIDs": ["10"]
+}
+```
 
 ### Eliona assets ###
 
