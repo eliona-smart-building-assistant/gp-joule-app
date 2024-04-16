@@ -23,8 +23,8 @@ DELETE FROM versioning.patches
 WHERE app_name = 'gp-joule';
 
 INSERT INTO public.eliona_store (app_name, category, version)
-VALUES ('gp-joule', 'app', '1.0.0')
-	ON CONFLICT (app_name) DO UPDATE SET version = '1.0.0';
+VALUES ('gp-joule', 'app', 'v1.0.0')
+	ON CONFLICT (app_name) DO UPDATE SET version = 'v1.0.0';
 
 INSERT INTO public.eliona_app (app_name, enable)
 VALUES ('gp-joule', 't')
