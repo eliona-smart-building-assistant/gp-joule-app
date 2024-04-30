@@ -18,6 +18,7 @@ package gp_joule
 import (
 	"fmt"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
+	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"gp-joule/apiserver"
 	"gp-joule/appdb"
 	"gp-joule/model"
@@ -37,6 +38,7 @@ func GetClusters(config *apiserver.Configuration) ([]*model.Cluster, error) {
 	}
 
 	// read clusters
+	log.Trace("gp-joule", "Reading URL %s", fullUrl)
 	clusters, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.Cluster](request, time.Duration(*config.RequestTimeout)*time.Second, true)
 	if err != nil || statusCode != http.StatusOK {
 		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
@@ -56,6 +58,7 @@ func GetCompletedSessions(config *apiserver.Configuration, dbConnectorAsset *app
 	}
 
 	// read sessions
+	log.Trace("gp-joule", "Reading URL %s", fullUrl)
 	sessions, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.ChargingSession](request, time.Duration(*config.RequestTimeout)*time.Second, true)
 	if err != nil || statusCode != http.StatusOK {
 		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
@@ -88,6 +91,7 @@ func GetErrorNotifications(config *apiserver.Configuration, dbConnectorAsset *ap
 	}
 
 	// read error notifications
+	log.Trace("gp-joule", "Reading URL %s", fullUrl)
 	notifications, statusCode, err := utilshttp.ReadWithStatusCode[[]*model.ErrorNotification](request, time.Duration(*config.RequestTimeout)*time.Second, true)
 	if err != nil || statusCode != http.StatusOK {
 		return nil, fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
@@ -110,6 +114,7 @@ func GetErrorNotifications(config *apiserver.Configuration, dbConnectorAsset *ap
 }
 
 func request(config *apiserver.Configuration, fullUrl string) (*http.Request, error) {
+	log.Trace("gp-joule", "Creating request for URL %s", fullUrl)
 	request, err := utilshttp.NewRequestWithApiKey(fullUrl, "x-api-key", config.ApiKey)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request for %s: %w", fullUrl, err)
