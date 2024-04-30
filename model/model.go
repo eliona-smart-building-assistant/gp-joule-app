@@ -201,10 +201,12 @@ func (cp *ChargePoint) GetLocationalChildren() []asset.LocationalNode {
 		connector.ChargePoint = cp
 		connector.Config = cp.Config
 		connector.Index = idx + 1
-		if connector.ChargingSession != nil {
+		if connector.ChargingSession != nil && connector.ChargingSession.MeterTotal > 0 && connector.ChargingSession.SessionStart != nil && connector.ChargingSession.SessionEnd != nil {
 			connector.Duration = connector.ChargingSession.Duration
 			connector.MeterTotal = int(math.Max(float64(connector.ChargingSession.MeterTotal), 0))
 			connector.Occupied = mapOccupancyStatus(connector.Status)
+		} else {
+			connector.Occupied = mapOccupancyStatus("available")
 		}
 		locationalChildren = append(locationalChildren, connector)
 	}
