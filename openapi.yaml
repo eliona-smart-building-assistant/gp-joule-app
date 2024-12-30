@@ -21,7 +21,7 @@ info:
   description: API to access and configure the GP Joule app
 externalDocs:
   description: Find out more about the GP Joule app
-  url: https://github.com/eliona-smart-building-assistant/gp-joule-app
+  url: https://doc.eliona.io/collection/v/eliona-english/eliona-apps/apps/gp-joule
 servers:
   - url: "https://{server}/v1"
     variables:
